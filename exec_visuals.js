@@ -1,26 +1,10 @@
 // ==========================================================================
 // exec_visuals.js — DAC Shares block for the Executive Summary
-//
-// Renders:
-//  - Toggle bar (35% NY Climate Act / 40% NY Climate Act Goal)
-//  - 3 visuals in one row, equal size:
-//      Op 1: Equity Strip
-//      Op 6: Equity Radar
-//      Op 9: Diverging Bar (gap vs goal)
-//
-// Each visual has:
-//  - Hover tooltip with section detail
-//  - "? How to read this chart" button → modal (matches Equity Quadrant pattern)
-//  - Subtitle
-//
-// Toggler change → updates localStorage + dispatches "baseline:changed" event
-// so index_page.js re-renders the Reported KPIs cards.
 // ==========================================================================
 
 (function () {
   const PAYLOAD = JSON.parse(document.getElementById('payload').textContent);
 
-  // Build per-section DAC % map
   function buildSectionDAC() {
     const map24 = {}, map23 = {};
     PAYLOAD.kpis.forEach(k => {
@@ -43,7 +27,6 @@
       D: 'DER', E: 'Strategic Cap', F: 'Outages',
       G: 'Main Replace', H: 'Leak Repairs', I: 'Jobs', J: 'Customer Ops'
     };
-    // Shorter labels just for the radar (axes get clipped on the sides)
     const RADAR_SHORT_NAMES = {
       A: 'Clean Energy', B: 'EV Ready', C: 'Demand Resp',
       D: 'DER', E: 'Strategic', F: 'Outages',
@@ -58,13 +41,12 @@
       pct2023: map23[s] ? map23[s].pct : null,
       hasData: !!map24[s],
       label: map24[s] ? map24[s].label : null,
-      isWarn: s === 'F'  // outages: higher = worse
+      isWarn: s === 'F'
     }));
   }
 
   const SECTIONS = buildSectionDAC();
 
-  // ===== Baseline storage =====
   const BASELINE_KEY = 'coned_dac_baseline_pct';
   function getBaseline() {
     const v = parseInt(localStorage.getItem(BASELINE_KEY), 10);
@@ -75,7 +57,6 @@
     document.dispatchEvent(new CustomEvent('baseline:changed', { detail: n }));
   }
 
-  // ===== Toggle bar =====
   function renderToggleBar() {
     const baseline = getBaseline();
     return `
@@ -90,7 +71,6 @@
     `;
   }
 
-  // ===== Op 1: Equity Strip =====
   function renderStrip(baseline) {
     const rows = SECTIONS.map(s => {
       const pctNum = s.pct2024 * 100;
@@ -129,8 +109,8 @@
           </div>
           <div class="strip-body">${rows}</div>
           <div class="quadrant-help-trigger">
-            <button class="help-btn" data-help-modal="strip" type="button">
-              <span class="help-icon">?</span> How to read this chart
+            <button class="help-btn help-btn-icon-only" data-help-modal="strip" type="button" aria-label="How to read this chart">
+              <span class="help-icon">?</span>
             </button>
           </div>
         </div>
@@ -138,7 +118,6 @@
     `;
   }
 
-  // ===== Op 6: Equity Radar =====
   function renderRadar(baseline) {
     const N = SECTIONS.length;
     const cx = 230, cy = 195, R = 130;
@@ -217,8 +196,8 @@
             </svg>
           </div>
           <div class="quadrant-help-trigger">
-            <button class="help-btn" data-help-modal="radar" type="button">
-              <span class="help-icon">?</span> How to read this chart
+            <button class="help-btn help-btn-icon-only" data-help-modal="radar" type="button" aria-label="How to read this chart">
+              <span class="help-icon">?</span>
             </button>
           </div>
         </div>
@@ -226,7 +205,6 @@
     `;
   }
 
-  // ===== Op 9: Diverging Bar =====
   function renderDiverging(baseline) {
     const goal = baseline / 100;
     const data = SECTIONS.map(s => ({
@@ -291,8 +269,8 @@
             </div>
           </div>
           <div class="quadrant-help-trigger">
-            <button class="help-btn" data-help-modal="diverging" type="button">
-              <span class="help-icon">?</span> How to read this chart
+            <button class="help-btn help-btn-icon-only" data-help-modal="diverging" type="button" aria-label="How to read this chart">
+              <span class="help-icon">?</span>
             </button>
           </div>
         </div>
@@ -300,7 +278,6 @@
     `;
   }
 
-  // ===== Render the whole block =====
   function renderBlock() {
     const block = document.getElementById('exec-shares-block');
     if (!block) return;
@@ -318,7 +295,6 @@
     wireHelpButtons();
   }
 
-  // ===== Wire toggle 35/40 =====
   function wireToggle() {
     document.querySelectorAll('.exec-toggle-bar .rkpi-toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -331,7 +307,6 @@
     });
   }
 
-  // ===== Tooltip (single floating element) =====
   function ensureTooltip() {
     let tip = document.querySelector('.exec-tooltip');
     if (!tip) {
@@ -344,8 +319,6 @@
 
   function wireTooltips() {
     const tip = ensureTooltip();
-
-    // Strip rows + Diverging rows + Radar dots
     const targets = document.querySelectorAll('.strip-row[data-section], .div-row[data-section], .radar-dot[data-section]');
     targets.forEach(el => {
       el.addEventListener('mouseenter', () => {
@@ -371,10 +344,19 @@
     });
   }
 
-  // ===== Help modal (matches Equity Quadrant pattern) =====
+  // Track if delegation is wired (only once)
+  let helpDelegationWired = false;
   function wireHelpButtons() {
-    document.querySelectorAll('.help-btn[data-help-modal]').forEach(btn => {
-      btn.addEventListener('click', () => {
+    if (helpDelegationWired) return;
+    helpDelegationWired = true;
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.help-btn[data-help-modal]');
+      if (!btn) return;
+      // Only handle clicks within the exec shares block
+      if (!btn.closest('#exec-shares-block')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      ((btn) => {
         const which = btn.dataset.helpModal;
         const baseline = getBaseline();
         let title, body;
@@ -382,34 +364,28 @@
         if (which === 'strip') {
           title = 'How to read · DAC Equity by Section';
           body = `
-            <p>Each <em>bar</em> shows the share of one section's primary metric that reached Disadvantaged Communities (DACs) in 2024. The vertical <em>tick</em> marks the ${baseline}% Climate Act goal.</p>
-            <div class="quadrant-zones">
-              <div class="zone zone-tr"><span class="zone-label">▶ Bar past tick</span><span class="zone-desc">Section is above the ${baseline}% goal — DACs receiving an equitable or larger share of investment.</span></div>
-              <div class="zone zone-bl"><span class="zone-label">◀ Bar short of tick</span><span class="zone-desc">Section is below the goal — DACs under-served relative to the Climate Act baseline.</span></div>
-              <div class="zone zone-tl"><span class="zone-label">↑ Section F (amber)</span><span class="zone-desc">Outages: higher DAC share is <em>worse</em>, not better — colored amber to flag the inversion.</span></div>
-              <div class="zone zone-br"><span class="zone-label">N/A bar</span><span class="zone-desc">Section I (Jobs): DAC breakdown not reported in the source data.</span></div>
+            <div class="exec-help-content">
+              <p>Each row is one of the ten reporting sections (A through J). The <strong>blue fill</strong> shows the share of that section's primary metric that reached Disadvantaged Communities in 2024. Bars closer to the right edge mean a larger DAC share.</p>
+              <p>The vertical <strong>blue tick</strong> marks the <strong>${baseline}% Climate Act benchmark</strong>. Reading the chart is straightforward: bars that pass the tick are exceeding the benchmark; bars that fall short of it are below it.</p>
+              <p class="exec-help-note">Section F (Outages) is shown in mauve rather than blue because in this case a higher DAC share is <em>worse</em>, not better — DACs are bearing more of the outage burden.</p>
             </div>
           `;
         } else if (which === 'radar') {
           title = 'How to read · Equity Radar · 360° Profile';
           body = `
-            <p>Each <em>axis</em> is one of the 10 sections. The distance from the center is the DAC share. The outer ring = 70%. The blue polygon shows 2024 performance. The dashed mauve ring shows the ${baseline}% Climate Act goal.</p>
-            <div class="quadrant-zones">
-              <div class="zone zone-tr"><span class="zone-label">▲ Polygon outside the dashed ring</span><span class="zone-desc">Section exceeds the ${baseline}% goal — strong equity performance.</span></div>
-              <div class="zone zone-br"><span class="zone-label">▼ Polygon inside the dashed ring</span><span class="zone-desc">Section falls short of the goal — DAC share below ${baseline}%.</span></div>
-              <div class="zone zone-tl"><span class="zone-label">◯ Polygon symmetry</span><span class="zone-desc">A balanced shape = equity is consistent across sections. A "spike" means one section is over- or under-performing relative to the rest.</span></div>
-              <div class="zone zone-bl"><span class="zone-label">⊙ Vertex at center</span><span class="zone-desc">No DAC data reported (e.g., Section I · Jobs) — vertex sits at 0%.</span></div>
+            <div class="exec-help-content">
+              <p>Each axis radiating from the center represents one of the ten sections. The distance from the center to a vertex is that section's DAC share — the outer ring is <strong>70%</strong>, the inner ring is <strong>10%</strong>.</p>
+              <p>The <strong>solid blue polygon</strong> traces 2024 performance across all ten sections at once. The <strong>dashed inner ring</strong> shows the <strong>${baseline}% Climate Act benchmark</strong>. Wherever the polygon extends beyond the dashed ring, that section is meeting or exceeding the benchmark; wherever it falls inside, that section is below it.</p>
+              <p class="exec-help-note">A balanced (regular) shape means equity is consistent across sections. A "spike" or "dent" reveals where one section is significantly over- or under-performing relative to the rest.</p>
             </div>
           `;
         } else {
           title = 'How to read · Gap vs Goal';
           body = `
-            <p>The vertical line at the center is the ${baseline}% Climate Act goal. Each <em>bar</em> shows how many percentage points (pp) a section is above or below that goal in 2024. Sorted from largest positive gap (top) to largest negative gap (bottom).</p>
-            <div class="quadrant-zones">
-              <div class="zone zone-tr"><span class="zone-label">▶ Green bar (right)</span><span class="zone-desc">Section is exceeding the ${baseline}% goal — the further right, the larger the over-performance.</span></div>
-              <div class="zone zone-bl"><span class="zone-label">◀ Red bar (left)</span><span class="zone-desc">Section is below the goal — the further left, the larger the equity gap.</span></div>
-              <div class="zone zone-tl"><span class="zone-label">● Gray dot at center</span><span class="zone-desc">Section is essentially at the goal (within ±0.5pp).</span></div>
-              <div class="zone zone-br"><span class="zone-label">○ Dashed dot</span><span class="zone-desc">No DAC data reported (Section I) — placed at center.</span></div>
+            <div class="exec-help-content">
+              <p>The vertical line at the center represents the <strong>${baseline}% Climate Act benchmark</strong>. Each bar shows how many percentage points (pp) a section is above or below that benchmark in 2024.</p>
+              <p>Bars extending to the <strong>right</strong> indicate sections exceeding the benchmark; the further right, the larger the over-performance. Bars extending to the <strong>left</strong> indicate sections below it. Sections essentially at the benchmark (within ±0.5pp) appear as a small dot at the center.</p>
+              <p class="exec-help-note">Sections are sorted from the largest positive gap at the top to the largest negative gap at the bottom — making it instantly clear which sections are leading the equity story and which need attention.</p>
             </div>
           `;
         }
@@ -431,15 +407,11 @@
         document.addEventListener('keydown', function esc(e) {
           if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc); }
         });
-      });
+      })(btn);
     });
   }
 
-  // ===== Init =====
-  function init() {
-    renderBlock();
-  }
-
+  function init() { renderBlock(); }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {

@@ -2971,3 +2971,69 @@ a.nav-item { text-decoration: none; }
   font-weight: 600;
   font-feature-settings: "tnum";
 }
+
+/* =============================================================
+   APPEND THIS TO THE END OF shared.css — circular "?" button + new modal style
+   ============================================================= */
+
+/* ===== Icon-only "?" help button (circular, replaces text-based button) ===== */
+.exec-shares-grid .exec-card .help-btn-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  color: var(--dusk);
+  gap: 0;
+}
+.exec-shares-grid .exec-card .help-btn-icon-only:hover {
+  background: var(--dusk);
+  border-color: var(--dusk);
+  color: var(--white);
+}
+.exec-shares-grid .exec-card .help-btn-icon-only .help-icon {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  background: transparent !important;
+  color: inherit !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+  display: inline-block;
+}
+
+/* ===== Modal content for the exec visuals (single explanation, blue accent) ===== */
+.exec-help-content p {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-2);
+}
+.exec-help-content p:last-child {
+  margin-bottom: 0;
+}
+.exec-help-content strong {
+  color: var(--dusk);
+  font-weight: 700;
+}
+.exec-help-content em {
+  font-style: italic;
+  color: var(--text);
+}
+.exec-help-content .exec-help-note {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: var(--dusk-tint);
+  border-left: 3px solid var(--dusk);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-2);
+}
