@@ -495,7 +495,7 @@
     };
 
     var dacColor    = 'var(--dusk)';
-    var nondacColor = 'var(--mauve-shadow)';
+    var nondacColor = '#52a2e7';
 
     // Value labels
     var valLabels = '';
