@@ -3037,3 +3037,374 @@ a.nav-item { text-decoration: none; }
   font-size: 12px;
   color: var(--text-2);
 }
+
+/* =============================================================
+   APPEND TO END OF shared.css — Group placeholders + toggler spacing
+   ============================================================= */
+
+/* Toggler arriba: garantiza que tenga el espaciado correcto */
+#exec-toggle-mount {
+  margin-bottom: 18px;
+}
+#exec-toggle-mount .exec-toggle-bar {
+  margin-bottom: 0;
+}
+
+/* Placeholder visible para los grupos vacíos (Investments + Trend Analysis) */
+.exec-group-placeholder {
+  background: var(--bright-snow);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  padding: 28px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-3);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* =============================================================
+   APPEND TO END OF shared.css — Trend Analysis block (Op 4 + Op 7 + Op 8)
+   ============================================================= */
+
+/* === Op 4: Investment Trend (line chart) === */
+.trend-svg-wrap {
+  margin-top: 8px;
+  width: 100%;
+}
+.trend-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.trend-meta {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.trend-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.trend-meta-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.trend-meta-label {
+  flex: 1;
+  font-weight: 500;
+}
+.trend-meta-val {
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 11.5px;
+  font-feature-settings: "tnum";
+}
+
+/* === Op 7: Slope Chart === */
+.slope-svg-wrap {
+  margin-top: 8px;
+  width: 100%;
+}
+.slope-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* === Op 8: KPI Heatmap === */
+.hm-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+.hm-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 1fr 1fr;
+  gap: 4px;
+  align-items: center;
+}
+.hm-row.hm-header {
+  margin-bottom: 4px;
+}
+.hm-label-head,
+.hm-cell-head {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  font-weight: 700;
+  padding: 6px 8px;
+  text-align: center;
+}
+.hm-label-head {
+  text-align: left;
+}
+.hm-label {
+  font-size: 12px;
+  color: var(--text-2);
+  font-weight: 500;
+  padding: 8px 4px 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hm-letter {
+  display: inline-block;
+  font-family: var(--font);
+  font-weight: 700;
+  color: var(--dusk);
+  width: 12px;
+  text-align: center;
+  margin-right: 4px;
+}
+.hm-cell {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 6px;
+  border-radius: 4px;
+  font-feature-settings: "tnum";
+  color: var(--text);
+  white-space: nowrap;
+}
+/* Color tiers — green to red */
+.hm-cell.hm-above {
+  background: var(--green);
+  color: var(--white);
+}
+.hm-cell.hm-at {
+  background: var(--green-tint);
+  color: var(--green);
+}
+.hm-cell.hm-near {
+  background: rgba(201, 122, 58, 0.20);
+  color: #8B5520;
+}
+.hm-cell.hm-below {
+  background: var(--red);
+  color: var(--white);
+}
+.hm-cell.hm-na {
+  background: var(--white-smoke);
+  color: var(--text-4);
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Heatmap legend */
+.hm-legend {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.hm-legend .legend-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+.legend-swatch.hm-sw-below { background: var(--red); }
+.legend-swatch.hm-sw-near  { background: rgba(201, 122, 58, 0.50); }
+.legend-swatch.hm-sw-at    { background: var(--green-tint); border: 1px solid var(--green); }
+.legend-swatch.hm-sw-above { background: var(--green); }
+
+/* =============================================================
+   APPEND TO END OF shared.css — Dumbbell + 4-col grid + chart-head-right
+   ============================================================= */
+
+/* ===== 4-column grid for DAC Shares (4 visuals) ===== */
+.exec-shares-grid.exec-shares-grid-4 {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+@media (max-width: 1500px) {
+  .exec-shares-grid.exec-shares-grid-4 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 800px) {
+  .exec-shares-grid.exec-shares-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== Right-side header cluster (legend + tag stacked vertically) ===== */
+.exec-shares-grid .exec-card .chart-head-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.exec-shares-grid .exec-card .chart-head-right .chart-legend {
+  margin: 0;
+  justify-content: flex-end;
+  font-size: 9.5px;
+}
+.exec-shares-grid .exec-card .chart-head-right .chart-tag {
+  margin: 0;
+}
+
+/* ===== Op NEW: Dumbbell chart ===== */
+.dumb-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.dumb-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 56px;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: default;
+  transition: background 0.15s ease;
+}
+.dumb-row:hover {
+  background: var(--bright-snow);
+}
+.dumb-row.is-na {
+  opacity: 0.55;
+}
+.dumb-label {
+  color: var(--text-2);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+}
+.dumb-bar {
+  position: relative;
+  height: 22px;
+}
+.dumb-tick {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: #2873BA;
+  z-index: 1;
+}
+.dumb-connector {
+  position: absolute;
+  top: 50%;
+  height: 1.5px;
+  background: var(--text-4);
+  transform: translateY(-50%);
+  z-index: 2;
+}
+.dumb-dot {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid white;
+  z-index: 3;
+}
+.dumb-dot-prev {
+  background: #B0BCC9;
+}
+.dumb-dot-curr {
+  background: var(--dusk);
+}
+.dumb-empty-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  color: var(--text-3);
+  font-style: italic;
+  font-weight: 600;
+  z-index: 2;
+}
+
+/* YoY pill */
+.dumb-pill {
+  display: inline-flex;
+  justify-content: center;
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  white-space: nowrap;
+  justify-self: end;
+  font-feature-settings: "tnum";
+}
+.dumb-pill.dumb-pill-up {
+  color: var(--green);
+  background: rgba(42, 119, 85, 0.12);
+}
+.dumb-pill.dumb-pill-down {
+  color: var(--red);
+  background: rgba(178, 59, 42, 0.12);
+}
+.dumb-pill.dumb-pill-neutral {
+  color: var(--text-3);
+  background: var(--white-smoke);
+}
+
+/* X-axis below the dumbbell */
+.dumb-axis {
+  position: relative;
+  margin: 8px 56px 0 110px;
+  padding-top: 6px;
+  height: 14px;
+  border-top: 1px dashed var(--line);
+}
+.dumb-axis-tick {
+  position: absolute;
+  top: 4px;
+  transform: translateX(-50%);
+  font-family: var(--font);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.dumb-axis-tick.dumb-axis-goal {
+  color: #2873BA;
+  font-weight: 700;
+}
+
+/* ===== "No baseline" placeholder for slope when year=2023 ===== */
+.exec-no-baseline {
+  background: var(--bright-snow);
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  padding: 32px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.exec-no-baseline strong {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 700;
+}
+.exec-no-baseline span {
+  font-size: 11px;
+  color: var(--text-3);
+  line-height: 1.5;
+  max-width: 320px;
+}

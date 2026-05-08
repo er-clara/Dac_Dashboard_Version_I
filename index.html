@@ -68,12 +68,51 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- ============== NEW: DAC SHARES BLOCK ===================== -->
+<!-- Toggler 35/40: stays at the top, controls all visuals + KPIs  -->
 <!-- ============================================================ -->
-<div class="exec-shares-block" id="exec-shares-block">
-  <!-- Rendered by exec_visuals.js -->
+<div id="exec-toggle-mount"></div>
+
+<!-- ============================================================ -->
+<!-- Group 1: DAC Shares (3 visuals: Strip + Radar + Diverging)   -->
+<!-- ============================================================ -->
+<div class="kpi-group">
+  <div class="kpi-group-header">
+    <h2>DAC Shares</h2>
+    <span class="group-tag">Equity Distribution</span>
+    <span class="group-desc">Per-section DAC shares benchmarked against the Climate Act goal · Three views</span>
+  </div>
+  <div id="exec-shares-grid"></div>
 </div>
 
+<!-- ============================================================ -->
+<!-- Group 2: Investments (placeholder - content coming next)     -->
+<!-- ============================================================ -->
+<div class="kpi-group">
+  <div class="kpi-group-header">
+    <h2>Investments</h2>
+    <span class="group-tag">Capital Allocation</span>
+    <span class="group-desc">Where DAC dollars are flowing across sections and program categories</span>
+  </div>
+  <div class="exec-group-placeholder">
+    Coming next — investment allocation visuals
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Group 3: Trend Analysis (placeholder - content coming next)  -->
+<!-- ============================================================ -->
+<div class="kpi-group">
+  <div class="kpi-group-header">
+    <h2>Trend Analysis</h2>
+    <span class="group-tag">Year-over-Year</span>
+    <span class="group-desc">How DAC equity is moving over time — direction, velocity, and inflection points</span>
+  </div>
+  <div id="exec-trends-grid"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Existing groups: Analytical KPIs + Reported KPIs (untouched) -->
+<!-- ============================================================ -->
 <div class="kpi-group analytical">
   <div class="kpi-group-header">
     <h2>Analytical KPIs</h2>
