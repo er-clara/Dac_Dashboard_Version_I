@@ -3,13 +3,15 @@
 // Layout: 1/4 Distribution | 1/4 YoY Growth | 1/4 Equity Quadrant | 1/4 KPI Cards (2x2)
 // Responds to year-select dropdown + distMode toggle
 // ==========================================================================
- 
+
 (function () {
   const PAYLOAD = JSON.parse(document.getElementById('payload').textContent);
- 
+
   // ── Section payload cache (fetched dynamically) ──
   var SECTION_CACHE = {};
- 
+
+  // TODO: replace fetch('section_X.html') with Dataverse API call per section
+  // Endpoint pattern: GET /dataverse/sections/{letter}?year={year}
   function getSectionPayload(letter) {
     return new Promise(function(resolve) {
       if (SECTION_CACHE[letter]) { resolve(SECTION_CACHE[letter]); return; }
@@ -28,14 +30,20 @@
         .catch(function() { resolve(null); });
     });
   }
- 
+
+  // TODO: replace A_DATA with Dataverse endpoint
+  // Fields to fetch per year: dac, nondac, total, dacPct, savings_dac, savings_total,
+  // inst_pct (from tables A5/A8), topProgram (derive from A1 table max dac_pct),
+  // yoy percentages (calculate from consecutive year totals),
+  // prevDac, prevTotal, prevSavings_dac, prevSavings_total
   const A_DATA = {
     '2024': {
       dac: 204785586, nondac: 175480128, total: 380265714,
       dacPct: 53.9,
       savings_dac: 2486965, savings_total: 4360879,
-      inst_pct: 50,
-      topProgram: { name: 'Affordable Multifamily', total: 77558050, pct: 92 },
+      inst_pct: 50, // TODO: derive from tables A5/A8 (DAC installs / total installs)
+      topProgram: { name: 'Affordable Multifamily', total: 77558050, pct: 92 }, // TODO: derive dynamically from A1 table (max dac_pct program)
+      // TODO: calculate yoy from consecutive PAYLOAD kpis years (dac delta / prev dac)
       yoy: [
         { label: 'Total<br>Incentives',   overall: 45, dac: 58 },
         { label: 'Energy<br>Savings',     overall: 8,  dac: 50 },
@@ -51,8 +59,8 @@
       dac: 129680235, nondac: 132844686, total: 262524921,
       dacPct: 49.4,
       savings_dac: 1659904, savings_total: 4019790,
-      inst_pct: 38,
-      topProgram: { name: 'Clean Heat – Multifamily ASHP', total: 28288902, pct: 74 },
+      inst_pct: 38, // TODO: derive from tables A5/A8 (DAC installs / total installs)
+      topProgram: { name: 'Clean Heat – Multifamily ASHP', total: 28288902, pct: 74 }, // TODO: derive dynamically from A1 table (max dac_pct program)
       yoy: null,
       prevDac: null, prevTotal: null,
       prevSavings_dac: null, prevSavings_total: null,
@@ -60,11 +68,11 @@
       prevYear: '2022'
     }
   };
- 
+
   let state    = { year: '2024' };
   let distMode = 'incentives';
   let quadMode = 'incentives';
- 
+
   function fmtM(v) {
     if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
     if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
@@ -74,22 +82,22 @@
     if (v >= 1e6) return (v/1e6).toFixed(2) + 'M';
     return Math.round(v/1e3) + 'K';
   }
- 
+
   // ── 1. Distribution ──
   function renderDistribution() {
     const yr  = A_DATA[state.year];
     const isSavings = distMode === 'savings';
- 
+
     const dacVal    = isSavings ? yr.savings_dac                      : yr.dac;
     const nondacVal = isSavings ? (yr.savings_total - yr.savings_dac) : yr.nondac;
     const totalVal  = isSavings ? yr.savings_total                    : yr.total;
     const dacPct    = isSavings ? +(yr.savings_dac / yr.savings_total * 100).toFixed(1) : yr.dacPct;
     const nonPct    = (100 - dacPct).toFixed(1);
     const fmtVal    = isSavings ? v => fmtMMBtu(v) + ' MMBtu' : fmtM;
- 
+
     const prevDacVal   = isSavings ? yr.prevSavings_dac   : yr.prevDac;
     const prevTotalVal = isSavings ? yr.prevSavings_total : yr.prevTotal;
- 
+
     const compareHtml = prevDacVal ? `
       <div class="ai-dist-compare">
         <div class="ai-dist-cmp-row">
@@ -108,11 +116,11 @@
           <span class="ai-dist-cmp-label" style="color:var(--text-4)">No ${yr.prevYear} baseline available</span>
         </div>
       </div>`;
- 
+
     const cardTitle = isSavings ? 'Energy Savings Distribution' : 'Incentive Spend Distribution';
     const cardSub   = isSavings ? 'MMBtu · DAC vs Other Communities · ' + state.year
                                 : 'Incentives · DAC vs Other Communities · ' + state.year;
- 
+
     return `
       <div class="ai-card">
         <div class="ai-card-head">
@@ -153,11 +161,11 @@
         </div>
       </div>`;
   }
- 
+
   // ── 2. YoY Growth ──
   function renderYoY() {
     const yr = A_DATA[state.year];
- 
+
     if (!yr.yoy) {
       return `
         <div class="ai-card">
@@ -173,10 +181,10 @@
           </div>
         </div>`;
     }
- 
+
     const maxVal = 80;
     const chartH = 200;
- 
+
     const bars = yr.yoy.map(row => {
       const oh = Math.max(3, (row.overall / maxVal) * chartH);
       const dh = Math.max(3, (row.dac     / maxVal) * chartH);
@@ -195,7 +203,7 @@
           <div class="ai-yoy-lbl">${row.label}</div>
         </div>`;
     }).join('');
- 
+
     return `
       <div class="ai-card" style="gap:4px;">
         <div class="ai-card-head">
@@ -212,12 +220,12 @@
         </div>
       </div>`;
   }
- 
+
   // ── 3. Equity Quadrant ──
   function renderQuadrant() {
     const yr    = A_DATA[state.year];
     const isSav = quadMode === 'savings';
- 
+
     const A2_2024 = [
       {name:'Affordable Multifamily Energy Efficiency Program',total:483052,dac:439980,dac_pct:0.91},
       {name:'Clean Heat – C&I Air Source Heat Pump',total:61309,dac:10598,dac_pct:0.17},
@@ -329,11 +337,11 @@
       {name:'Midstream Water and Space Heating',total:939139,dac:484759,dac_pct:0.52},
       {name:'Residential Program – Gas',total:19100,dac:425,dac_pct:0.02}
     ];
- 
+
     // Use cached section payload if available, else fall back to hardcoded
     var a2Data   = state.year === '2024' ? A2_2024 : A2_2023;
     var a1Data   = state.year === '2024' ? A1_2024 : A1_2023;
- 
+
     if (SECTION_CACHE['A'] && SECTION_CACHE['A'].tables) {
       var tables = SECTION_CACHE['A'].tables;
       var showCurrent = state.year === '2024';
@@ -372,9 +380,9 @@
         if (parsed2.length > 0) a2Data = parsed2;
       }
     }
- 
+
     const programs = isSav ? a2Data : a1Data;
- 
+
     const xLabel = isSav ? 'Total Energy Savings (MMBtu)' : 'Total Incentive Funding ($)';
     const fmtX   = isSav
       ? v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : Math.round(v/1e3)+'K'
@@ -382,7 +390,7 @@
     const fmtTip = isSav
       ? v => v >= 1e6 ? (v/1e6).toFixed(2)+'M MMBtu' : Math.round(v/1e3)+'K MMBtu'
       : v => v >= 1e6 ? '$'+(v/1e6).toFixed(0)+'M' : '$'+Math.round(v/1e3)+'K';
- 
+
     const W=240, H=150, pL=30, pR=8, pT=14, pB=22;
     const iW=W-pL-pR, iH=H-pT-pB;
     const maxT = Math.max(...programs.map(p=>p.total));
@@ -390,7 +398,7 @@
     const rFor = v => Math.max(minR, Math.min(maxR, Math.sqrt(v/maxT)*maxR));
     const xFor = v => pL + (v/maxT)*iW;
     const yFor = p => pT + iH - (p*iH);
- 
+
     let s = '';
     [0,25,50,75,100].forEach(p => {
       const y = yFor(p/100);
@@ -410,7 +418,7 @@
     s += '<text x="'+(pL+iW/2).toFixed(1)+'" y="'+(H-1)+'" font-size="5" fill="#888" text-anchor="middle">'+xLabel+'</text>';
     s += '<text x="6" y="'+(pT+iH/2).toFixed(1)+'" font-size="5" fill="#888" text-anchor="middle" transform="rotate(-90 6 '+(pT+iH/2)+')">DAC Share</text>';
     s += '<text x="'+(W-pR-2).toFixed(1)+'" y="'+(yFor(.5)-2).toFixed(1)+'" font-size="4.5" fill="#2F5496" text-anchor="end">50% parity</text>';
- 
+
     programs.forEach(p => {
       const x = xFor(p.total);
       const y = yFor(p.dac_pct);
@@ -423,12 +431,12 @@
          + ' data-total="'+fmtTip(p.total)+'"'
          + ' data-pct="'+(p.dac_pct*100).toFixed(0)+'%"/>';
     });
- 
+
     const cardTitle = isSav ? 'Equity Quadrant · Energy Savings' : 'Equity Quadrant · Incentive Spend';
     const cardSub   = isSav
       ? 'DAC % vs total MMBtu · circle size = program volume · ' + state.year
       : 'DAC % vs total $ · circle size = program volume · ' + state.year;
- 
+
     return `
       <div class="ai-card" style="gap:1px;">
         <div class="ai-card-head">
@@ -446,19 +454,19 @@
         </div>
       </div>`;
   }
- 
+
   // ── 4. KPI 2×2 ──
   function renderKPICards() {
     const yr = A_DATA[state.year];
     const incGrow = yr.prevDac ? Math.round((yr.dac - yr.prevDac) / yr.prevDac * 100) : null;
     const savGrow = yr.prevSavings_dac ? Math.round((yr.savings_dac - yr.prevSavings_dac) / yr.prevSavings_dac * 100) : null;
- 
+
     const cards = [
       {
         tag:    'Incentive Growth',
-        hero:   incGrow !== null ? '+' + incGrow + '%' : '—',
-        sub:    incGrow !== null ? 'DAC YoY increase' : '',
-        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : 'No prior year baseline'
+        hero:   incGrow !== null ? '+' + incGrow + '%' : yr.dacPct + '%',
+        sub:    incGrow !== null ? 'DAC YoY increase' : 'DAC share',
+        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : fmtM(yr.dac) + ' total DAC'
       },
       {
         tag:    'Most Equitable Program',
@@ -468,11 +476,11 @@
       },
       {
         tag:    'Savings Achieved',
-        hero:   savGrow !== null ? '+' + savGrow + '%' : '—',
-        sub:    savGrow !== null ? 'DAC savings YoY increase' : '',
+        hero:   savGrow !== null ? '+' + savGrow + '%' : fmtMMBtu(yr.savings_dac) + ' MMBtu',
+        sub:    savGrow !== null ? 'DAC savings YoY increase' : 'DAC energy savings',
         detail: yr.prevSavings_dac
           ? fmtMMBtu(yr.prevSavings_dac) + ' → ' + fmtMMBtu(yr.savings_dac) + ' MMBtu'
-          : 'No prior year baseline'
+          : fmtMMBtu(yr.savings_total) + ' MMBtu total'
       },
       {
         tag:    'Installations',
@@ -483,7 +491,7 @@
           : 'Reporting year ' + state.year
       }
     ];
- 
+
     const html = cards.map(c => `
       <div class="ai-kpi-mini">
         <span class="ai-kpi-mini-tag">${c.tag}</span>
@@ -491,7 +499,7 @@
         <span class="ai-kpi-mini-sub">${c.sub}</span>
         <span class="ai-kpi-mini-detail">${c.detail}</span>
       </div>`).join('');
- 
+
     return `
       <div class="ai-card ai-kpi-card-outer">
         <div class="ai-card-head">
@@ -504,15 +512,15 @@
         <div class="ai-kpi-2x2">${html}</div>
       </div>`;
   }
- 
- 
+
+
   // ── Header Cards ──
   function renderHeaderCards() {
     const grid = document.getElementById('exec-header-cards');
     if (!grid) return;
- 
+
     const yr = A_DATA[state.year];
- 
+
     // Average DAC Impact % across all sections from PAYLOAD
     const dacPcts = PAYLOAD.kpis
       .filter(k => k['y' + state.year] && k['y' + state.year].dac_pct != null)
@@ -520,10 +528,10 @@
     const avgDac = dacPcts.length > 0
       ? (dacPcts.reduce((a, b) => a + b, 0) / dacPcts.length * 100).toFixed(1)
       : '—';
- 
+
     const incGrow = yr.prevDac ? Math.round((yr.dac - yr.prevDac) / yr.prevDac * 100) : null;
     const savGrow = yr.prevSavings_dac ? Math.round((yr.savings_dac - yr.prevSavings_dac) / yr.prevSavings_dac * 100) : null;
- 
+
     const cards = [
       {
         tag:    'Avg DAC Impact',
@@ -533,23 +541,23 @@
       },
       {
         tag:    'Incentive Growth',
-        hero:   incGrow !== null ? '+' + incGrow + '%' : '—',
-        sub:    incGrow !== null ? 'DAC YoY increase' : '',
-        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : 'No prior year baseline'
-      },
-       {
-        tag:    'Savings Achieved',
-        hero:   savGrow !== null ? '+' + savGrow + '%' : '—',
-        sub:    savGrow !== null ? 'DAC savings YoY increase' : '',
-        detail: yr.prevSavings_dac
-          ? fmtMMBtu(yr.prevSavings_dac) + ' → ' + fmtMMBtu(yr.savings_dac) + ' MMBtu'
-          : 'No prior year baseline'
+        hero:   incGrow !== null ? '+' + incGrow + '%' : yr.dacPct + '%',
+        sub:    incGrow !== null ? 'DAC YoY increase' : 'DAC share',
+        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : fmtM(yr.dac) + ' total DAC'
       },
       {
         tag:    'Most Equitable Program',
         hero:   yr.topProgram.pct + '%',
         sub:    'DAC share · Section A',
         detail: yr.topProgram.name + ' · ' + fmtM(yr.topProgram.total)
+      },
+      {
+        tag:    'Savings Achieved',
+        hero:   savGrow !== null ? '+' + savGrow + '%' : fmtMMBtu(yr.savings_dac) + ' MMBtu',
+        sub:    savGrow !== null ? 'DAC savings YoY increase' : 'DAC energy savings',
+        detail: yr.prevSavings_dac
+          ? fmtMMBtu(yr.prevSavings_dac) + ' → ' + fmtMMBtu(yr.savings_dac) + ' MMBtu'
+          : fmtMMBtu(yr.savings_total) + ' MMBtu total'
       },
       {
         tag:    'Installations',
@@ -560,12 +568,12 @@
           : 'Reporting year ' + state.year
       }
     ];
- 
+
     grid.style.display = 'grid';
     grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
     grid.style.gap = '12px';
     grid.style.marginBottom = '16px';
- 
+
     grid.innerHTML = cards.map(c => `
       <div class="ai-kpi-mini ai-header-card">
         <span class="ai-kpi-mini-tag">${c.tag}</span>
@@ -573,7 +581,7 @@
         <span class="ai-kpi-mini-sub">${c.sub}</span>
         <span class="ai-kpi-mini-detail">${c.detail}</span>
       </div>`).join('');
- 
+
     // wire tooltips for header cards
     let tip = document.querySelector('.exec-tooltip');
     if (!tip) {
@@ -600,7 +608,7 @@
       card.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
   }
- 
+
   // ── Render all ──
   function renderAreaIntelligence() {
     const grid = document.getElementById('exec-area-grid');
@@ -616,7 +624,7 @@
     renderHeaderCards();
     wireTooltips();
   }
- 
+
   // ── Tooltips + toggle wiring ──
   function wireTooltips() {
     let tip = document.querySelector('.exec-tooltip');
@@ -625,7 +633,7 @@
       tip.className = 'exec-tooltip';
       document.body.appendChild(tip);
     }
- 
+
     // Distribution toggle
     document.querySelectorAll('.ai-dist-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -633,7 +641,7 @@
         renderAreaIntelligence();
       });
     });
- 
+
     // Quadrant toggle
     document.querySelectorAll('.ai-quad-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -641,7 +649,7 @@
         renderAreaIntelligence();
       });
     });
- 
+
     // YoY bars
     document.querySelectorAll('.ai-yoy-bar').forEach(bar => {
       bar.style.cursor = 'default';
@@ -658,7 +666,7 @@
       });
       bar.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
- 
+
     // Quadrant dots
     document.querySelectorAll('.ai-quad-dot').forEach(dot => {
       dot.style.cursor = 'default';
@@ -675,7 +683,7 @@
       });
       dot.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
- 
+
     // KPI mini cards
     document.querySelectorAll('.ai-kpi-mini').forEach(card => {
       card.style.cursor = 'default';
@@ -697,7 +705,7 @@
       card.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
   }
- 
+
   // ── Init ──
   function init() {
     const yrSel = document.getElementById('year-select');
@@ -715,11 +723,11 @@
       renderHeaderCards();
     });
   }
- 
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
- 
+
 })();

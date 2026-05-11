@@ -495,7 +495,7 @@
     };
 
     var dacColor    = 'var(--dusk)';
-    var nondacColor = '#52a2e7';
+    var nondacColor = 'var(--pale-sky)';
 
     // Value labels
     var valLabels = '';
@@ -527,7 +527,7 @@
       var tip    = dacTips[i];
       var isProj = i >= 2;
       dotsHtml += '<circle class="trend-dot" cx="' + xFor(i).toFixed(1) + '" cy="' + yFor(v).toFixed(1)
-               + '" r="' + (isProj ? 1 : 1) + '"'
+               + '" r="' + (isProj ? 1.2 : 1.2) + '"'
                + ' fill="' + (isProj ? 'var(--white)' : dacColor) + '"'
                + ' stroke="' + dacColor + '" stroke-width="' + (isProj ? 0.5: 1) + '"'
                + ' data-seg="DAC" data-yr="' + tip.yr + '" data-val="' + fmt(tip.val) + '"'
@@ -540,7 +540,7 @@
       var isProj = i >= 2;
       var nPct   = isNaN(parseFloat(tip.pct)) ? '—' : tip.pct + '%';
       dotsHtml += '<circle class="trend-dot" cx="' + xFor(i).toFixed(1) + '" cy="' + yFor(v).toFixed(1)
-               + '" r="' + (isProj ? 1 : 1) + '"'
+               + '" r="' + (isProj ? 1.2 : 1.2) + '"'
                + ' fill="' + (isProj ? 'var(--white)' : nondacColor) + '"'
                + ' stroke="' + nondacColor + '" stroke-width="' + (isProj ? 0.5: 1) + '"'
                + ' data-seg="Non-DAC" data-yr="' + tip.yr + '" data-val="' + fmt(tip.val) + '"'
@@ -564,10 +564,10 @@
 
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="trend-svg" preserveAspectRatio="xMidYMid meet">'
       + grid + shadedRegion + projLabel
-      + '<path d="' + buildPath(nonDacVals, 0, 1) + '" fill="none" stroke="' + nondacColor + '" stroke-width="0.5"/>'
-      + '<path d="' + buildPath(nonDacVals, 1, 3) + '" fill="none" stroke="' + nondacColor + '" stroke-width="0.3" stroke-dasharray="6 4" opacity="0.65"/>'
-      + '<path d="' + buildPath(dacVals, 0, 1) + '" fill="none" stroke="' + dacColor + '" stroke-width="0.5"/>'
-      + '<path d="' + buildPath(dacVals, 1, 3) + '" fill="none" stroke="' + dacColor + '" stroke-width="0.3" stroke-dasharray="6 4" opacity="0.65"/>'
+      + '<path d="' + buildPath(nonDacVals, 0, 1) + '" fill="none" stroke="' + nondacColor + '" stroke-width="1"/>'
+      + '<path d="' + buildPath(nonDacVals, 1, 3) + '" fill="none" stroke="' + nondacColor + '" stroke-width="0.8" stroke-dasharray="6 4" opacity="0.65"/>'
+      + '<path d="' + buildPath(dacVals, 0, 1) + '" fill="none" stroke="' + dacColor + '" stroke-width="1"/>'
+      + '<path d="' + buildPath(dacVals, 1, 3) + '" fill="none" stroke="' + dacColor + '" stroke-width="0.8" stroke-dasharray="6 4" opacity="0.65"/>'
       + dotsHtml + valLabels + xlabels
       + '</svg>';
 
