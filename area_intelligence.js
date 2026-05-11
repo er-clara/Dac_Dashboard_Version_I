@@ -541,23 +541,25 @@
 
     // Order: Avg DAC Impact → Incentive Growth → Savings Achieved → Most Equitable Program → Strategic Electric Capital
     const cards = [
-      {
-        tag:    'Avg DAC Impact',
-        hero:   avgDac + '%',
-        sub:    'Average across all sections',
-        detail: 'Based on ' + reportedKpis + ' reported metrics · ' + state.year,
-        link:   null,
-        tooltip: {
-          title: 'Avg DAC Impact · How it\'s calculated',
-          rows: [
-            { label: 'Formula', value: 'Σ(DAC %) ÷ N' },
-            { label: 'Reported KPIs', value: reportedKpis + ' metrics' },
-            { label: 'Coverage', value: 'All 10 sections (A–J)' },
-            { label: 'Result · ' + state.year, value: avgDac + '%' }
-          ],
-          note: 'Each KPI with a non-null DAC % is averaged. This is an unweighted simple mean — equal weight per metric, not dollar-weighted.'
-        }
-      },
+      // Avg DAC Impact — hidden for now
+      
+    // {
+    // tag:    'Avg DAC Impact',
+    // hero:   avgDac + '%',
+    // sub:    'Average across all sections',
+    // detail: 'Based on ' + reportedKpis + ' reported metrics · ' + state.year,
+    // link:   null,
+    // tooltip: {
+      // title: 'Avg DAC Impact · How it\'s calculated',
+       // rows: [
+        // { label: 'Formula', value: 'Σ(DAC %) ÷ N' },
+        // { label: 'Reported KPIs', value: reportedKpis + ' metrics' },
+        // { label: 'Coverage', value: 'All 10 sections (A–J)' },
+        // { label: 'Result · ' + state.year, value: avgDac + '%' }
+       // ],
+      //  note: 'Each KPI with a non-null DAC % is averaged. This is an unweighted simple mean — equal weight per metric, not dollar-weighted.'
+      // }
+      // },
       {
         tag:    'Incentive Growth',
         hero:   incGrow !== null ? '+' + incGrow + '%' : yr.dacPct + '%',
@@ -613,27 +615,27 @@
           note: 'The Clean Energy program with the highest DAC-funded share. Calculated as DAC incentives ÷ total incentives per program.'
         }
       },
-      {
-        tag:    'Strategic Capital',
-        hero:   eDacPct + '%',
-        sub:    'DAC exposure · Section E',
-        detail: 'Weighted across ' + eCats.length + ' categories',
-        link:   'section_E.html',
-        tooltip: {
-          title: 'Strategic Electric Capital Investments',
-          rows: [
-            { label: 'Source', value: 'Section E · Capital tables' },
-            { label: 'Categories', value: eCats.length + ' investment areas' },
-            { label: 'Total invested', value: fmtBig(eTotal) },
-            { label: 'DAC exposure', value: eDacPct + '%' }
-          ],
-          note: 'Dollar-weighted DAC % across Environmental, Risk Reduction, Safety & Security, and System Expansion capital investments.'
-        }
-      }
+      //{
+        //tag:    'Strategic Capital',
+        //hero:   eDacPct + '%',
+        //sub:    'DAC exposure · Section E',
+        //detail: 'Weighted across ' + eCats.length + ' categories',
+        //link:   'section_E.html',
+        //tooltip: {
+          //title: 'Strategic Electric Capital Investments',
+          //rows: [
+            //{ label: 'Source', value: 'Section E · Capital tables' },
+            //{ label: 'Categories', value: eCats.length + ' investment areas' },
+            //{ label: 'Total invested', value: fmtBig(eTotal) },
+            //{ label: 'DAC exposure', value: eDacPct + '%' }
+          //],
+          //note: 'Dollar-weighted DAC % across Environmental, Risk Reduction, Safety & Security, and System Expansion capital investments.'
+        //}
+      //}
     ];
 
     grid.style.display = 'grid';
-    grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+    grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
     grid.style.gap = '12px';
     grid.style.marginBottom = '16px';
 
