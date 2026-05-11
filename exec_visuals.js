@@ -659,9 +659,9 @@
     }
     const yr = state.year;
     sharesGrid.innerHTML = `
-      ${renderRadar(baseline, yr)}
-      ${renderStripWithGap(baseline, yr)}
       ${renderDumbbell(baseline, yr)}
+      ${renderStripWithGap(baseline, yr)}
+      ${renderRadar(baseline, yr)}
     `;
     renderTrendAnalysis();
     wireToggle();
