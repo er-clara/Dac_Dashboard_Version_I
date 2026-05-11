@@ -122,7 +122,7 @@
                                 : 'Incentives · DAC vs Other Communities · ' + state.year;
 
     return `
-      <div class="ai-card">
+      <div class="ai-card" style="cursor:pointer" data-section-link="section_A.html">
         <div class="ai-card-head">
           <div>
             <span class="ai-card-title">${cardTitle}</span>
@@ -168,7 +168,7 @@
 
     if (!yr.yoy) {
       return `
-        <div class="ai-card">
+        <div class="ai-card" style="cursor:pointer" data-section-link="section_A.html">
           <div class="ai-card-head">
             <div>
               <span class="ai-card-title">Year-Over-Year Growth</span>
@@ -205,7 +205,7 @@
     }).join('');
 
     return `
-      <div class="ai-card" style="gap:4px;">
+      <div class="ai-card" style="gap:4px;cursor:pointer" data-section-link="section_A.html">
         <div class="ai-card-head">
           <div>
             <span class="ai-card-title">Year-Over-Year Growth</span>
@@ -438,7 +438,7 @@
       : 'DAC % vs total $ · circle size = program volume · ' + state.year;
 
     return `
-      <div class="ai-card" style="gap:1px;">
+      <div class="ai-card" style="gap:1px;cursor:pointer" data-section-link="section_A.html">
         <div class="ai-card-head">
           <div>
             <span class="ai-card-title">${cardTitle}</span>
@@ -501,7 +501,7 @@
       </div>`).join('');
 
     return `
-      <div class="ai-card ai-kpi-card-outer">
+      <div class="ai-card ai-kpi-card-outer" style="cursor:pointer" data-section-link="section_A.html">
         <div class="ai-card-head">
           <div>
             <span class="ai-card-title">Key Metrics · ${state.year}</span>
@@ -528,28 +528,53 @@
     const avgDac = dacPcts.length > 0
       ? (dacPcts.reduce((a, b) => a + b, 0) / dacPcts.length * 100).toFixed(1)
       : '—';
+    const reportedKpis = dacPcts.length;
 
     const incGrow = yr.prevDac ? Math.round((yr.dac - yr.prevDac) / yr.prevDac * 100) : null;
     const savGrow = yr.prevSavings_dac ? Math.round((yr.savings_dac - yr.prevSavings_dac) / yr.prevSavings_dac * 100) : null;
 
+    // Section E DAC exposure (weighted avg of categories in E_DATA)
+    const eCats = E_DATA[state.year] || E_DATA['2024'];
+    const eTotal = eCats.reduce((sum, c) => sum + c.total24, 0);
+    const eDacTotal = eCats.reduce((sum, c) => sum + c.total24 * c.curr, 0);
+    const eDacPct = eTotal > 0 ? (eDacTotal / eTotal * 100).toFixed(1) : '—';
+
+    // Order: Avg DAC Impact → Incentive Growth → Savings Achieved → Most Equitable Program → Strategic Electric Capital
     const cards = [
       {
         tag:    'Avg DAC Impact',
         hero:   avgDac + '%',
         sub:    'Average across all sections',
-        detail: 'Based on ' + dacPcts.length + ' reported metrics · ' + state.year
+        detail: 'Based on ' + reportedKpis + ' reported metrics · ' + state.year,
+        link:   null,
+        tooltip: {
+          title: 'Avg DAC Impact · How it\'s calculated',
+          rows: [
+            { label: 'Formula', value: 'Σ(DAC %) ÷ N' },
+            { label: 'Reported KPIs', value: reportedKpis + ' metrics' },
+            { label: 'Coverage', value: 'All 10 sections (A–J)' },
+            { label: 'Result · ' + state.year, value: avgDac + '%' }
+          ],
+          note: 'Each KPI with a non-null DAC % is averaged. This is an unweighted simple mean — equal weight per metric, not dollar-weighted.'
+        }
       },
       {
         tag:    'Incentive Growth',
         hero:   incGrow !== null ? '+' + incGrow + '%' : yr.dacPct + '%',
         sub:    incGrow !== null ? 'DAC YoY increase' : 'DAC share',
-        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : fmtM(yr.dac) + ' total DAC'
-      },
-      {
-        tag:    'Most Equitable Program',
-        hero:   yr.topProgram.pct + '%',
-        sub:    'DAC share · Section A',
-        detail: yr.topProgram.name + ' · ' + fmtM(yr.topProgram.total)
+        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : fmtM(yr.dac) + ' total DAC',
+        link:   'section_A.html',
+        tooltip: {
+          title: 'Incentive Growth · Incentive Dollars Spent',
+          rows: [
+            { label: 'Source', value: 'Section A · Clean Energy' },
+            { label: 'Metric', value: 'DAC incentive $ paid' },
+            { label: '2023', value: yr.prevDac ? fmtM(yr.prevDac) : 'n/a' },
+            { label: state.year, value: fmtM(yr.dac) },
+            { label: 'YoY change', value: incGrow !== null ? '+' + incGrow + '%' : '—' }
+          ],
+          note: 'Total dollars disbursed as DAC incentives across all Clean Energy programs. From Section A · Table A1 totals.'
+        }
       },
       {
         tag:    'Savings Achieved',
@@ -557,15 +582,53 @@
         sub:    savGrow !== null ? 'DAC savings YoY increase' : 'DAC energy savings',
         detail: yr.prevSavings_dac
           ? fmtMMBtu(yr.prevSavings_dac) + ' → ' + fmtMMBtu(yr.savings_dac) + ' MMBtu'
-          : fmtMMBtu(yr.savings_total) + ' MMBtu total'
+          : fmtMMBtu(yr.savings_total) + ' MMBtu total',
+        link:   'section_A.html',
+        tooltip: {
+          title: 'Savings Achieved · Energy savings delivered',
+          rows: [
+            { label: 'Source', value: 'Section A · Table A2' },
+            { label: 'Metric', value: 'DAC MMBtu savings' },
+            { label: '2023', value: yr.prevSavings_dac ? fmtMMBtu(yr.prevSavings_dac) + ' MMBtu' : 'n/a' },
+            { label: state.year, value: fmtMMBtu(yr.savings_dac) + ' MMBtu' },
+            { label: 'YoY change', value: savGrow !== null ? '+' + savGrow + '%' : '—' }
+          ],
+          note: 'Total energy savings (MMBtu) delivered to disadvantaged communities through Clean Energy programs.'
+        }
       },
       {
-        tag:    'Installations',
-        hero:   yr.inst_pct + '%',
-        sub:    'of upgrades in DACs',
-        detail: yr.prevYear && A_DATA[yr.prevYear]
-          ? 'vs ~' + A_DATA[yr.prevYear].inst_pct + '% in ' + yr.prevYear
-          : 'Reporting year ' + state.year
+        tag:    'Most Equitable Program',
+        hero:   yr.topProgram.pct + '%',
+        sub:    'DAC share · Section A',
+        detail: yr.topProgram.name + ' · ' + fmtM(yr.topProgram.total),
+        link:   'section_A.html',
+        tooltip: {
+          title: 'Most Equitable Program · Highest DAC %',
+          rows: [
+            { label: 'Source', value: 'Section A · Table A1' },
+            { label: 'Program', value: yr.topProgram.name },
+            { label: 'Total spend', value: fmtM(yr.topProgram.total) },
+            { label: 'DAC share', value: yr.topProgram.pct + '%' }
+          ],
+          note: 'The Clean Energy program with the highest DAC-funded share. Calculated as DAC incentives ÷ total incentives per program.'
+        }
+      },
+      {
+        tag:    'Strategic Capital',
+        hero:   eDacPct + '%',
+        sub:    'DAC exposure · Section E',
+        detail: 'Weighted across ' + eCats.length + ' categories',
+        link:   'section_E.html',
+        tooltip: {
+          title: 'Strategic Electric Capital Investments',
+          rows: [
+            { label: 'Source', value: 'Section E · Capital tables' },
+            { label: 'Categories', value: eCats.length + ' investment areas' },
+            { label: 'Total invested', value: fmtBig(eTotal) },
+            { label: 'DAC exposure', value: eDacPct + '%' }
+          ],
+          note: 'Dollar-weighted DAC % across Environmental, Risk Reduction, Safety & Security, and System Expansion capital investments.'
+        }
       }
     ];
 
@@ -575,7 +638,7 @@
     grid.style.marginBottom = '16px';
 
     grid.innerHTML = cards.map(c => `
-      <div class="ai-kpi-mini ai-header-card">
+      <div class="ai-kpi-mini ai-header-card" ${c.link ? 'data-link="' + c.link + '" style="cursor:pointer"' : ''}>
         <span class="ai-kpi-mini-tag">${c.tag}</span>
         <span class="ai-kpi-mini-hero">${c.hero}</span>
         <span class="ai-kpi-mini-sub">${c.sub}</span>
@@ -589,16 +652,19 @@
       tip.className = 'exec-tooltip';
       document.body.appendChild(tip);
     }
-    grid.querySelectorAll('.ai-kpi-mini').forEach(card => {
-      card.style.cursor = 'default';
+    grid.querySelectorAll('.ai-kpi-mini').forEach((card, idx) => {
+      const cfg = cards[idx];
       card.addEventListener('mouseenter', () => {
-        const tag    = card.querySelector('.ai-kpi-mini-tag').textContent;
-        const hero   = card.querySelector('.ai-kpi-mini-hero').textContent;
-        const sub    = card.querySelector('.ai-kpi-mini-sub').textContent;
-        const detail = card.querySelector('.ai-kpi-mini-detail').textContent;
-        tip.innerHTML = `<div class="tt-name">${tag}</div>
-          <div class="tt-row"><span>${sub}</span><span class="v">${hero}</span></div>
-          <div class="tt-row"><span>Detail</span><span class="v">${detail}</span></div>`;
+        const rowsHtml = cfg.tooltip.rows.map(r =>
+          '<div class="tt-row"><span>' + r.label + '</span><span class="v">' + r.value + '</span></div>'
+        ).join('');
+        tip.innerHTML =
+          '<div class="tt-name">' + cfg.tooltip.title + '</div>' +
+          rowsHtml +
+          '<div class="tt-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line)">' +
+            '<span style="font-size:9.5px;color:var(--text-3);line-height:1.4">' + cfg.tooltip.note + '</span>' +
+          '</div>' +
+          '';
         tip.style.opacity = '1';
       });
       card.addEventListener('mousemove', e => {
@@ -606,7 +672,263 @@
         tip.style.top  = (e.pageY - 8)  + 'px';
       });
       card.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+      if (cfg.link) {
+        card.addEventListener('click', () => { window.location.href = cfg.link; });
+      }
     });
+  }
+
+  // ── Section E: Arc chart + YoY bars (each 2/4 wide) ──
+  const E_DATA = {
+    '2024': [
+      { name: 'Environmental',     total24: 70779794,  total23: 53396000,  prev: 0.56, curr: 0.53 },
+      { name: 'Risk Reduction',    total24: 514647065, total23: 697262000, prev: 0.42, curr: 0.52 },
+      { name: 'Safety & Security', total24: 24106971,  total23: 19355000,  prev: 0.54, curr: 0.54 },
+      { name: 'System Expansion',  total24: 367058018, total23: 528240000, prev: 0.35, curr: 0.46 }
+    ],
+    '2023': [
+      { name: 'Environmental',     total24: 53396000,  total23: 53396000,  prev: null, curr: 0.56 },
+      { name: 'Risk Reduction',    total24: 697262000, total23: 697262000, prev: null, curr: 0.42 },
+      { name: 'Safety & Security', total24: 19355000,  total23: 19355000,  prev: null, curr: 0.54 },
+      { name: 'System Expansion',  total24: 528240000, total23: 528240000, prev: null, curr: 0.35 }
+    ]
+  };
+
+  function fmtBig(v) {
+    return v >= 1e9 ? '$' + (v/1e9).toFixed(2) + 'B' : '$' + (v/1e6).toFixed(1) + 'M';
+  }
+
+  function renderEArcChart() {
+    const yr = state.year;
+    const cats = E_DATA[yr] || E_DATA['2024'];
+
+    // Find biggest gain
+    let maxGain = -999, biggestIdx = -1;
+    cats.forEach((c, i) => {
+      if (c.prev === null) return;
+      const g = c.curr - c.prev;
+      if (g > maxGain) { maxGain = g; biggestIdx = i; }
+    });
+
+    // YoY bars HTML
+    const sorted = cats.slice().sort((a, b) => b.total24 - a.total24);
+    const maxAmt = Math.max.apply(null, sorted.map(c => Math.max(c.total24, c.total23)));
+
+    const yoyRows = sorted.map(cat => {
+      const w24 = (cat.total24 / maxAmt) * 100;
+      const w23 = (cat.total23 / maxAmt) * 100;
+      const prevYr = String(parseInt(yr) - 1);
+      return `
+        <div class="e-yoy-row" data-name="${cat.name}" data-total24="${fmtBig(cat.total24)}" data-total23="${fmtBig(cat.total23)}" data-curr="${(cat.curr*100).toFixed(0)}%" data-prev="${cat.prev !== null ? (cat.prev*100).toFixed(0)+'%' : 'n/a'}">
+          <div class="e-yoy-label">${cat.name}</div>
+          <div class="e-yoy-bars">
+            <div class="e-yoy-bar-line">
+              <span class="e-yoy-yr">${yr}</span>
+              <div class="e-yoy-track"><div class="e-yoy-fill" style="width:${w24}%;background:var(--dusk)"></div></div>
+              <span class="e-yoy-amt">${fmtBig(cat.total24)}</span>
+            </div>
+            ${cat.prev !== null ? `
+            <div class="e-yoy-bar-line">
+              <span class="e-yoy-yr">${prevYr}</span>
+              <div class="e-yoy-track"><div class="e-yoy-fill" style="width:${w23}%;background:var(--pale-sky)"></div></div>
+              <span class="e-yoy-amt">${fmtBig(cat.total23)}</span>
+            </div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="ai-card" style="grid-column:span 2;cursor:pointer;overflow:hidden;" onclick="window.location.href='section_E.html'">
+        <div class="ai-card-head">
+          <div>
+            <span class="ai-card-title">Strategic Capital · DAC Exposure Before &amp; After</span>
+            <p class="ai-card-sub">DAC exposure % by investment category · ${yr === '2024' ? '2023 → 2024' : yr}</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="ai-card-tag">Section E</span>
+            <div class="ai-dist-legend" style="gap:8px;font-size:9px">
+              <span><span class="ai-dist-swatch" style="background:var(--pale-sky)"></span>${yr === '2024' ? '2023' : 'baseline'}</span>
+              <span><span class="ai-dist-swatch" style="background:var(--dusk)"></span>${yr}</span>
+              <span><span class="ai-dist-swatch" style="background:var(--green)"></span>Biggest gain</span>
+            </div>
+          </div>
+        </div>
+        <canvas id="e-arc-canvas" class="e-arc-canvas" style="width:100%;display:block"></canvas>
+      </div>
+
+      <div class="ai-card" style="grid-column:span 2;cursor:pointer;overflow:hidden;" onclick="window.location.href='section_E.html'">
+        <div class="ai-card-head">
+          <div>
+            <span class="ai-card-title">Capital Investment YoY · by Category</span>
+            <p class="ai-card-sub">${yr} vs ${parseInt(yr)-1} per investment category</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <span class="ai-card-tag">Section E</span>
+            <div class="ai-dist-legend" style="gap:8px;font-size:9px">
+              <span><span class="ai-dist-swatch" style="background:var(--dusk)"></span>${yr}</span>
+              <span><span class="ai-dist-swatch" style="background:var(--pale-sky)"></span>${parseInt(yr)-1}</span>
+            </div>
+          </div>
+        </div>
+        <div id="e-yoy-list" class="e-yoy-list">${yoyRows}</div>
+      </div>`;
+  }
+
+  // Draw the arc chart on canvas (called after DOM insertion)
+  function drawEArcChart() {
+    const canvas = document.getElementById('e-arc-canvas');
+    if (!canvas) return;
+
+    const yr = state.year;
+    const cats = E_DATA[yr] || E_DATA['2024'];
+
+    let maxGain = -999, biggestIdx = -1;
+    cats.forEach((c, i) => {
+      if (c.prev === null) return;
+      const g = c.curr - c.prev;
+      if (g > maxGain) { maxGain = g; biggestIdx = i; }
+    });
+
+    const DPR = Math.max(window.devicePixelRatio || 1, 2);
+    const CW = canvas.parentElement.clientWidth - 32; // account for card padding
+    const R_OUT = 92, R_IN = 64, SW_OUT = 20, SW_IN = 18;
+    const TOP_PAD = SW_OUT/2 + 4;
+    const CY = TOP_PAD + R_OUT;
+    const LABEL_PAD = 1, LINE_H = 22;
+    const CH = CY + LABEL_PAD + LINE_H * 3 + 4;
+    // Tighter spacing: arcs closer together
+    const ARC_WIDTH = (R_OUT + SW_OUT/2) * 2;
+    const TOTAL_ARCS_W = ARC_WIDTH * cats.length;
+    const GAP = Math.max(8, (CW - TOTAL_ARCS_W) / (cats.length + 1));
+    const SIDE_PAD = GAP + R_OUT + SW_OUT/2;
+    const SPACING = ARC_WIDTH + GAP;
+
+    canvas.width = CW * DPR;
+    canvas.height = CH * DPR;
+    canvas.style.width = CW + 'px';
+    canvas.style.height = CH + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(DPR, DPR);
+    // Crisp text rendering
+    ctx.textBaseline = 'middle';
+
+    // Redraw on window resize
+    if (!window._eArcResizeBound) {
+      window._eArcResizeBound = true;
+      window.addEventListener('resize', () => {
+        setTimeout(drawEArcChart, 100);
+      });
+    }
+
+    function drawSemi(cx, r, pct, color, sw) {
+      if (pct <= 0.001) return;
+      const p = Math.min(pct, 0.9999);
+      const endAngle = Math.PI + Math.PI * p;
+      ctx.beginPath();
+      ctx.arc(cx, CY, r, Math.PI, endAngle, false);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = sw;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+
+    const hitZones = [];
+    cats.forEach((cat, i) => {
+      const cx = SIDE_PAD + i * SPACING;
+      const isBig = i === biggestIdx;
+      const c24 = isBig ? '#2A7755' : '#2F5496';
+
+      drawSemi(cx, R_OUT, 1.0, '#f0f0f0', SW_OUT);
+      drawSemi(cx, R_IN,  1.0, '#f0f0f0', SW_IN);
+      if (cat.prev !== null) drawSemi(cx, R_IN, cat.prev, '#BDDBF5', SW_IN);
+      drawSemi(cx, R_OUT, cat.curr, c24, SW_OUT);
+
+      let ty = CY + LABEL_PAD;
+      ctx.textAlign = 'center';
+
+      ctx.font = '700 25px Inter, system-ui, sans-serif';
+      ctx.fillStyle = c24;
+      ty += LINE_H;
+      ctx.fillText((cat.curr*100).toFixed(0)+'%', cx, ty);
+
+      if (cat.prev !== null) {
+        ctx.font = '500 12px Inter, system-ui, sans-serif';
+        ctx.fillStyle = '#aaa';
+        ty += LINE_H + 1;
+        ctx.fillText((cat.prev*100).toFixed(0)+'% \u2192 '+(cat.curr*100).toFixed(0)+'%', cx, ty);
+      } else {
+        ty += LINE_H - 1;
+      }
+
+      ctx.font = '600 13px Inter, system-ui, sans-serif';
+      ctx.fillStyle = '#111';
+      ty += LINE_H - 1;
+      ctx.fillText(cat.name, cx, ty);
+
+      const delta = cat.prev !== null ? Math.round((cat.curr - cat.prev) * 100) : null;
+      hitZones.push({ cx, cat, delta, isBig });
+    });
+
+    // Tooltip on canvas
+    let tip = document.querySelector('.exec-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'exec-tooltip';
+      document.body.appendChild(tip);
+    }
+
+    canvas.onmousemove = function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.clientX - rect.left) * (CW / rect.width);
+      const hit = hitZones.find(z => Math.abs(mx - z.cx) < SPACING/2);
+      if (hit) {
+        const c = hit.cat, d = hit.delta;
+        const dColor = d === null ? '#888' : (d > 0 ? 'var(--green)' : (d < 0 ? 'var(--red)' : '#888'));
+        const dStr = d === null ? '—' : (d > 0 ? '+' : '') + d + 'pp';
+        const prevStr = c.prev !== null ? (c.prev*100).toFixed(0)+'%' : 'n/a';
+        const goalStr = c.curr >= 0.5 ? '\u2713 Above 50% goal' : '\u2717 Below 50% goal';
+        tip.innerHTML =
+          '<div class="tt-name">' + c.name + (hit.isBig ? ' \u2605 biggest gain' : '') + '</div>' +
+          '<div class="tt-row"><span>Total investment</span><span class="v">' + fmtBig(c.total24) + '</span></div>' +
+          '<div class="tt-row"><span>DAC exposure ' + yr + '</span><span class="v">' + (c.curr*100).toFixed(0) + '%</span></div>' +
+          '<div class="tt-row"><span>Prior year</span><span class="v">' + prevStr + '</span></div>' +
+          '<div class="tt-row"><span>Change</span><span class="v" style="color:'+dColor+'">' + dStr + '</span></div>' +
+          '<div class="tt-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--line)"><span style="font-size:9px;color:var(--text-3)">Inner arc = prior year · Outer arc = current · Arc length = DAC %</span></div>';
+        tip.style.opacity = '1';
+        tip.style.left = (e.pageX + 14) + 'px';
+        tip.style.top = (e.pageY - 8) + 'px';
+      } else {
+        tip.style.opacity = '0';
+      }
+    };
+    canvas.onmouseleave = function() { tip.style.opacity = '0'; };
+
+    // YoY row tooltips
+    document.querySelectorAll('.e-yoy-row').forEach(row => {
+      row.onmouseenter = function() {
+        tip.innerHTML =
+          '<div class="tt-name">' + row.dataset.name + '</div>' +
+          '<div class="tt-row"><span>' + yr + ' investment</span><span class="v">' + row.dataset.total24 + '</span></div>' +
+          '<div class="tt-row"><span>' + (parseInt(yr)-1) + ' investment</span><span class="v">' + row.dataset.total23 + '</span></div>' +
+          '<div class="tt-row"><span>DAC % ' + yr + '</span><span class="v">' + row.dataset.curr + '</span></div>' +
+          '<div class="tt-row"><span>DAC % ' + (parseInt(yr)-1) + '</span><span class="v">' + row.dataset.prev + '</span></div>';
+        tip.style.opacity = '1';
+      };
+      row.onmousemove = function(e) {
+        tip.style.left = (e.pageX + 14) + 'px';
+        tip.style.top = (e.pageY - 8) + 'px';
+      };
+      row.onmouseleave = function() { tip.style.opacity = '0'; };
+    });
+  }
+
+  // ── Section labels ──
+  function sectionLabel(letter, name, href) {
+    return `
+      <div class="ai-section-row-label" style="grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:12px 0 8px;margin-top:4px">
+        <span style="width:28px;height:28px;background:var(--dusk);color:var(--white);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${letter}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--text)">${name}</span>
+      </div>`;
   }
 
   // ── Render all ──
@@ -617,12 +939,57 @@
     grid.style.gridTemplateColumns = '1fr 1fr 1fr 1fr';
     grid.style.gap = '12px';
     grid.innerHTML =
+      sectionLabel('A', 'Clean Energy Spending', 'section_A.html') +
       renderDistribution() +
       renderYoY() +
       renderQuadrant() +
-      renderKPICards();
+      renderKPICards() +
+      sectionLabel('E', 'Strategic Capital Investments', 'section_E.html') +
+      renderEArcChart();
     renderHeaderCards();
     wireTooltips();
+    drawEArcChart();
+  }
+
+  // ── Arc chart tooltips ──
+  function wireArcTooltips() {
+    let tip = document.querySelector('.exec-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'exec-tooltip';
+      document.body.appendChild(tip);
+    }
+    document.querySelectorAll('.e-arc-hit').forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('mouseenter', () => {
+        const name  = el.dataset.name;
+        const total = el.dataset.total;
+        const curr  = el.dataset.curr;
+        const prev  = el.dataset.prev;
+        const delta = el.dataset.delta;
+        const goal  = el.dataset.goal;
+        tip.innerHTML = `
+          <div class="tt-name">${name}</div>
+          <div class="tt-row"><span>Total investment</span><span class="v">${total}</span></div>
+          <div class="tt-row"><span>DAC exposure ${state.year}</span><span class="v">${curr}</span></div>
+          <div class="tt-row"><span>Prior year</span><span class="v">${prev}</span></div>
+          <div class="tt-row"><span>Change</span><span class="v">${delta}</span></div>
+          <div class="tt-row" style="margin-top:4px;padding-top:4px;border-top:1px solid var(--line)">
+            <span style="font-size:9px;color:var(--text-3)">How to read: inner arc = prior year DAC %, outer arc = current year. Gap between arcs shows equity gain or loss. Color = above/below 50% goal.</span>
+          </div>
+          <div class="tt-row"><span style="color:var(--dusk)">${goal}</span></div>`;
+        tip.style.opacity = '1';
+      });
+      el.addEventListener('mousemove', e => {
+        tip.style.left = (e.pageX + 14) + 'px';
+        tip.style.top  = (e.pageY - 8)  + 'px';
+      });
+      el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        window.location.href = 'section_E.html';
+      });
+    });
   }
 
   // ── Tooltips + toggle wiring ──
@@ -682,6 +1049,26 @@
         tip.style.top  = (e.pageY - 8)  + 'px';
       });
       dot.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+    });
+
+    // Section A card click handlers → section_A.html
+    document.querySelectorAll('[data-section-link]').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't navigate if user clicked on a toggle button inside the card
+        if (e.target.closest('.ai-dist-btn') || e.target.closest('.ai-quad-btn')) return;
+        const link = card.getAttribute('data-section-link');
+        if (link) window.location.href = link;
+      });
+    });
+
+    // Section A card click handlers → section_A.html
+    document.querySelectorAll('[data-section-link]').forEach(card => {
+      card.addEventListener('click', (e) => {
+        // Don't navigate when clicking internal toggle buttons
+        if (e.target.closest('.ai-dist-btn') || e.target.closest('.ai-quad-btn')) return;
+        const link = card.getAttribute('data-section-link');
+        if (link) window.location.href = link;
+      });
     });
 
     // KPI mini cards

@@ -4264,3 +4264,87 @@ a.nav-item { text-decoration: none; }
 #exec-header-cards .ai-kpi-mini {
   background: var(--white);
 }
+
+/* =============================================================
+   Section E — Arc chart + YoY bars
+   APPEND TO END OF shared.css
+   ============================================================= */
+
+.e-arc-canvas {
+  width: 100%;
+  display: block;
+}
+
+/* YoY bars list */
+.e-yoy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.e-yoy-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  cursor: default;
+  border-radius: 3px;
+  transition: background 0.15s ease;
+}
+.e-yoy-row:hover {
+  background: var(--bright-snow);
+}
+
+.e-yoy-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.e-yoy-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.e-yoy-bar-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.e-yoy-yr {
+  font-size: 9px;
+  color: var(--text-3);
+  font-weight: 600;
+  width: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.e-yoy-track {
+  flex: 1;
+  height: 11px;
+  background: var(--white-smoke);
+  border-radius: 2px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.e-yoy-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.e-yoy-amt {
+  font-size: 9.5px;
+  color: var(--text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 56px;
+  white-space: nowrap;
+}
+

@@ -108,7 +108,20 @@
       else if (Math.abs(gap) < 0.5) { gapText = 'at goal';        gapColor = 'var(--green)';  }
       else if (gap > 0)             { gapText = '+' + gap + 'pp'; gapColor = 'var(--dusk)';   }
       else                          { gapText = gap + 'pp';       gapColor = 'var(--red)';    }
-      const tooltipData = `data-section="${s.id}" data-name="${s.name}" data-pct="${pctText}" data-baseline="${baseline}%" data-gap="${gapText}"`;
+      const sectionPayload = PAYLOAD.kpis.find(k => k.section === s.id);
+      const dacVal   = (sectionPayload && sectionPayload['y' + year]) ? sectionPayload['y' + year].dac   : null;
+      const totalVal = (sectionPayload && sectionPayload['y' + year]) ? sectionPayload['y' + year].total : null;
+      const kpiLabel = sectionPayload ? sectionPayload.label : '';
+      const kpiUnit  = sectionPayload ? sectionPayload.unit  : '';
+      const kpiFmt   = sectionPayload ? sectionPayload.format : 'int';
+      const fmtVal = v => {
+        if (v == null) return 'n/a';
+        if (kpiFmt === 'currency') return v >= 1e9 ? '$'+(v/1e9).toFixed(2)+'B' : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M' : '$'+Math.round(v/1e3)+'K';
+        if (v >= 1e6) return (v/1e6).toFixed(2)+'M';
+        if (v >= 1e3) return (v/1e3).toFixed(0)+'K';
+        return Math.round(v).toLocaleString();
+      };
+      const tooltipData = `data-section="${s.id}" data-name="${s.name}" data-pct="${pctText}" data-baseline="${baseline}%" data-gap="${gapText}" data-kpi-label="${kpiLabel.replace(/"/g,"'")}" data-dac-val="${fmtVal(dacVal)}" data-total-val="${fmtVal(totalVal)}" data-unit="${kpiUnit}"`;
       return `
         <div class="strip-row" ${tooltipData}>
           <div class="strip-label">${s.name}</div>
@@ -206,7 +219,21 @@
       }
 
       const currTxt     = hasCurr ? (curr * 100).toFixed(1) + '%' : '—';
-      const tooltipData = `data-section="${s.id}" data-name="${s.name}" data-pct="${currTxt}" data-baseline="${baseline}%" data-gap="${pillText}"`;
+      const prevTxt     = hasPrev ? (prev * 100).toFixed(1) + '%' : 'n/a';
+      const sPayload    = PAYLOAD.kpis.find(k => k.section === s.id);
+      const dacVal2     = (sPayload && sPayload['y' + year]) ? sPayload['y' + year].dac   : null;
+      const totalVal2   = (sPayload && sPayload['y' + year]) ? sPayload['y' + year].total : null;
+      const kpiLabel2   = sPayload ? sPayload.label : '';
+      const kpiUnit2    = sPayload ? sPayload.unit  : '';
+      const kpiFmt2     = sPayload ? sPayload.format : 'int';
+      const fmtVal2 = v => {
+        if (v == null) return 'n/a';
+        if (kpiFmt2 === 'currency') return v >= 1e9 ? '$'+(v/1e9).toFixed(2)+'B' : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M' : '$'+Math.round(v/1e3)+'K';
+        if (v >= 1e6) return (v/1e6).toFixed(2)+'M';
+        if (v >= 1e3) return (v/1e3).toFixed(0)+'K';
+        return Math.round(v).toLocaleString();
+      };
+      const tooltipData = `data-section="${s.id}" data-name="${s.name}" data-pct="${currTxt}" data-baseline="${baseline}%" data-gap="${pillText}" data-prev-pct="${prevTxt}" data-kpi-label="${kpiLabel2.replace(/"/g,"'")}" data-dac-val="${fmtVal2(dacVal2)}" data-total-val="${fmtVal2(totalVal2)}" data-unit="${kpiUnit2}"`;
       return `
         <div class="dumb-row ${!hasCurr ? 'is-na' : ''}" ${tooltipData}>
           <div class="dumb-label">${s.name}</div>
@@ -299,7 +326,20 @@
       const v   = year === '2023' ? s.pct2023 : s.pct2024;
       const has = year === '2023' ? (s.pct2023 != null) : s.hasData;
       const pctText = has ? (v * 100).toFixed(1) + '%' : '—';
-      return `<circle class="radar-dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="var(--dusk)" stroke="white" stroke-width="1.5" data-section="${s.id}" data-name="${s.name}" data-pct="${pctText}" data-baseline="${baseline}%"/>`;
+      const rPayload  = PAYLOAD.kpis.find(k => k.section === s.id);
+      const rDacVal   = (rPayload && rPayload['y' + year]) ? rPayload['y' + year].dac   : null;
+      const rTotalVal = (rPayload && rPayload['y' + year]) ? rPayload['y' + year].total : null;
+      const rLabel    = rPayload ? rPayload.label : '';
+      const rUnit     = rPayload ? rPayload.unit  : '';
+      const rFmt      = rPayload ? rPayload.format : 'int';
+      const fmtR = v => {
+        if (v == null) return 'n/a';
+        if (rFmt === 'currency') return v >= 1e9 ? '$'+(v/1e9).toFixed(2)+'B' : v >= 1e6 ? '$'+(v/1e6).toFixed(1)+'M' : '$'+Math.round(v/1e3)+'K';
+        if (v >= 1e6) return (v/1e6).toFixed(2)+'M';
+        if (v >= 1e3) return (v/1e3).toFixed(0)+'K';
+        return Math.round(v).toLocaleString();
+      };
+      return `<circle class="radar-dot" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="var(--dusk)" stroke="white" stroke-width="1.5" data-section="${s.id}" data-name="${s.name}" data-pct="${pctText}" data-baseline="${baseline}%" data-kpi-label="${rLabel.replace(/"/g,"'")}" data-dac-val="${fmtR(rDacVal)}" data-total-val="${fmtR(rTotalVal)}" data-unit="${rUnit}"/>`;
     }).join('');
     const scaleLabels = [10, 30, 50, 70].map(p => {
       const r = (p / 100 / max) * R;
@@ -345,6 +385,10 @@
   function setTrendMode(m) { localStorage.setItem(TREND_MODE_KEY, m); }
 
   // Hardcoded verified actuals — source: Con Edison DAC Reports 2023 & 2024
+  // TODO: replace TREND_DATA with Dataverse endpoint
+  // Endpoint pattern: GET /dataverse/investment-trend?sections=A,B,E&years=2023,2024
+  // Fields per section/year: dac, nondac totals
+  // Projections (2025, 2026) calculated client-side as linear extrapolation
   var TREND_DATA = {
     total: {
       dac23: 659172170,    nondac23: 934207389,
@@ -383,7 +427,7 @@
   function renderInlineToggle() {
     var mode  = getTrendMode();
     var modes = [
-      { id: 'total', label: 'total' },
+      { id: 'total', label: 'A+B+E' },
       { id: 'A',     label: 'A' },
       { id: 'B',     label: 'B' },
       { id: 'E',     label: 'E' }
@@ -413,7 +457,7 @@
     var dacPct26 = total26 > 0 ? (dacProj26 / total26 * 100).toFixed(1) : '—';
 
     var W = 600, H = 80;
-    var padL = 20, padR = 12, padT = 0, padB = 14;
+    var padL = 42, padR = 16, padT = 6, padB = 14;
     var innerW = W - padL - padR;
     var innerH = H - padT - padB;
 
@@ -451,14 +495,14 @@
 
     // Grid + Y labels
     var grid = '';
-    for (var gi = 0; gi <= 5; gi++) {
-  var gv = (gi / 5) * niceMax;
+    for (var gi = 0; gi <= 3; gi++) {
+      var gv = (gi / 5) * niceMax;
       var gy = yFor(gv);
       grid += '<line x1="' + padL + '" y1="' + gy.toFixed(1)
             + '" x2="' + (W - padR) + '" y2="' + gy.toFixed(1)
             + '" stroke="var(--line)" stroke-width="0.5" stroke-dasharray="2 3"/>';
       grid += '<text x="' + (padL - 3) + '" y="' + (gy + 2).toFixed(1)
-            + '" font-size="3" fill="var(--text-3)" text-anchor="end" font-family="Inter">'
+            + '" font-size="6" fill="var(--text-3)" text-anchor="end" font-family="Inter">'
             + fmt(gv) + '</text>';
     }
 
@@ -468,7 +512,7 @@
       var x      = xFor(i);
       var isProj = yr >= 2025;
       xlabels += '<text x="' + x.toFixed(1) + '" y="' + (H - 3)
-               + '" font-size="3" font-weight="' + (isProj ? 500 : 700) + '"'
+               + '" font-size="6" font-weight="' + (isProj ? 500 : 700) + '"'
                + ' fill="' + (isProj ? 'var(--text-4)' : 'var(--text-2)') + '"'
                + ' text-anchor="middle" font-family="Inter">'
                + yr + (isProj ? ' ·p' : '') + '</text>';
@@ -482,7 +526,7 @@
                      + '" height="' + innerH + '" fill="rgba(3,24,36,0.03)"/>';
     var projLabelX   = ((xFor(2) + xFor(3)) / 2).toFixed(1);
     var projLabel    = '<text x="' + projLabelX + '" y="' + (padT + 5)
-                     + '" font-size="3" font-weight="700" fill="var(--text-4)"'
+                     + '" font-size="6" font-weight="700" fill="var(--text-4)"'
                      + ' text-anchor="middle" letter-spacing="0.06em" font-family="Inter">PROJ.</text>';
 
     // Path helper
@@ -495,7 +539,7 @@
     };
 
     var dacColor    = 'var(--dusk)';
-    var nondacColor = 'var(--pale-sky)';
+    var nondacColor = 'var(--mauve-shadow)';
 
     // Value labels
     var valLabels = '';
@@ -505,7 +549,7 @@
       var anchor = (i === 2) ? 'end' : 'middle';
       var xOff   = (i === 2) ? -6 : 0;
       valLabels += '<text x="' + (xFor(i) + xOff).toFixed(1) + '" y="' + (yFor(v) - 2).toFixed(1)
-                + '" font-size="4" font-weight="700" fill="' + dacColor + '"'
+                + '" font-size="6" font-weight="700" fill="' + dacColor + '"'
                 + ' text-anchor="' + anchor + '" font-family="Inter"'
                 + (isProj ? ' opacity="0.65"' : '') + '>' + fmt(v) + '</text>';
     });
@@ -515,7 +559,7 @@
       var anchor = (i === 2) ? 'end' : 'middle';
       var xOff   = (i === 2) ? -6 : 0;
       valLabels += '<text x="' + (xFor(i) + xOff).toFixed(1) + '" y="' + (yFor(v) + 5).toFixed(1)
-                + '" font-size="4" font-weight="700" fill="' + nondacColor + '"'
+                + '" font-size="6" font-weight="700" fill="' + nondacColor + '"'
                 + ' text-anchor="' + anchor + '" font-family="Inter"'
                 + (isProj ? ' opacity="0.65"' : '') + '>' + fmt(v) + '</text>';
     });
@@ -527,9 +571,9 @@
       var tip    = dacTips[i];
       var isProj = i >= 2;
       dotsHtml += '<circle class="trend-dot" cx="' + xFor(i).toFixed(1) + '" cy="' + yFor(v).toFixed(1)
-               + '" r="' + (isProj ? 1.2 : 1.2) + '"'
+               + '" r="' + (isProj ? 2.5 : 3) + '"'
                + ' fill="' + (isProj ? 'var(--white)' : dacColor) + '"'
-               + ' stroke="' + dacColor + '" stroke-width="' + (isProj ? 0.5: 1) + '"'
+               + ' stroke="' + dacColor + '" stroke-width="' + (isProj ? 1.5 : 1) + '"'
                + ' data-seg="DAC" data-yr="' + tip.yr + '" data-val="' + fmt(tip.val) + '"'
                + ' data-pct="' + (isNaN(tip.pct) ? '—' : tip.pct + '%') + '"'
                + ' data-proj="' + tip.proj + '"/>';
@@ -540,9 +584,9 @@
       var isProj = i >= 2;
       var nPct   = isNaN(parseFloat(tip.pct)) ? '—' : tip.pct + '%';
       dotsHtml += '<circle class="trend-dot" cx="' + xFor(i).toFixed(1) + '" cy="' + yFor(v).toFixed(1)
-               + '" r="' + (isProj ? 1.2 : 1.2) + '"'
+               + '" r="' + (isProj ? 2.5 : 3) + '"'
                + ' fill="' + (isProj ? 'var(--white)' : nondacColor) + '"'
-               + ' stroke="' + nondacColor + '" stroke-width="' + (isProj ? 0.5: 1) + '"'
+               + ' stroke="' + nondacColor + '" stroke-width="' + (isProj ? 1.5 : 1) + '"'
                + ' data-seg="Non-DAC" data-yr="' + tip.yr + '" data-val="' + fmt(tip.val) + '"'
                + ' data-pct="' + nPct + '"'
                + ' data-proj="' + tip.proj + '"/>';
@@ -564,10 +608,10 @@
 
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="trend-svg" preserveAspectRatio="xMidYMid meet">'
       + grid + shadedRegion + projLabel
-      + '<path d="' + buildPath(nonDacVals, 0, 1) + '" fill="none" stroke="' + nondacColor + '" stroke-width="1"/>'
-      + '<path d="' + buildPath(nonDacVals, 1, 3) + '" fill="none" stroke="' + nondacColor + '" stroke-width="0.8" stroke-dasharray="6 4" opacity="0.65"/>'
-      + '<path d="' + buildPath(dacVals, 0, 1) + '" fill="none" stroke="' + dacColor + '" stroke-width="1"/>'
-      + '<path d="' + buildPath(dacVals, 1, 3) + '" fill="none" stroke="' + dacColor + '" stroke-width="0.8" stroke-dasharray="6 4" opacity="0.65"/>'
+      + '<path d="' + buildPath(nonDacVals, 0, 1) + '" fill="none" stroke="' + nondacColor + '" stroke-width="2.5"/>'
+      + '<path d="' + buildPath(nonDacVals, 1, 3) + '" fill="none" stroke="' + nondacColor + '" stroke-width="2" stroke-dasharray="6 4" opacity="0.65"/>'
+      + '<path d="' + buildPath(dacVals, 0, 1) + '" fill="none" stroke="' + dacColor + '" stroke-width="2.5"/>'
+      + '<path d="' + buildPath(dacVals, 1, 3) + '" fill="none" stroke="' + dacColor + '" stroke-width="2" stroke-dasharray="6 4" opacity="0.65"/>'
       + dotsHtml + valLabels + xlabels
       + '</svg>';
 
@@ -588,6 +632,15 @@
       + '</div>'
       + '<div class="chart-body">'
         + '<div class="trend-svg-wrap">' + svg + '</div>'
+        + '<div class="trend-meta">'
+          + metaRow(dacColor,    'DAC YoY 2023→2024',     dacGrowthNum)
+          + metaRow(nondacColor, 'Non-DAC YoY 2023→2024', nondacGrowthNum)
+        + '</div>'
+        + '<div class="quadrant-help-trigger">'
+          + '<button class="help-btn help-btn-icon-only" data-help-modal="trend-line" type="button" aria-label="How to read">'
+            + '<span class="help-icon">?</span>'
+          + '</button>'
+        + '</div>'
       + '</div>'
     + '</div>';
   }
@@ -628,11 +681,23 @@
         var val  = dot.getAttribute('data-val');
         var pct  = dot.getAttribute('data-pct');
         var proj = dot.getAttribute('data-proj') === 'true';
+        var mode = getTrendMode();
+        var d    = TREND_DATA[mode];
+
         var html = '<div class="tt-name">' + seg + ' · ' + yr
-                 + (proj ? ' <span style="font-weight:500;color:var(--text-3);font-size:10px;">proj.</span>' : '')
+                 + (proj ? ' <span style="font-weight:500;color:var(--text-3);font-size:10px;">projected</span>' : '')
                  + '</div>';
-        html += '<div class="tt-row"><span>Investment</span><span class="v">' + val + '</span></div>';
-        html += '<div class="tt-row"><span>DAC share</span><span class="v">' + pct + '</span></div>';
+        html += '<div class="tt-row" style="color:var(--text-3);font-size:9.5px;margin-bottom:4px"><span>Scope: ' + d.label + '</span></div>';
+        html += '<div class="tt-row"><span>Investment ($)</span><span class="v">' + val + '</span></div>';
+        html += '<div class="tt-row"><span>' + seg + ' share of total</span><span class="v">' + pct + '</span></div>';
+        if (!proj) {
+          html += '<div class="tt-row"><span>Source</span><span class="v">Filed DAC report ' + yr + '</span></div>';
+        } else {
+          html += '<div class="tt-row"><span>Method</span><span class="v">Linear projection</span></div>';
+          html += '<div class="tt-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line)">' +
+                  '<span style="font-size:9.5px;color:var(--text-3);line-height:1.4">Linear extrapolation from 2023 → 2024 trend, floored at $0. Not a forecast — illustrative only.</span>' +
+                  '</div>';
+        }
         tip.innerHTML = html;
         tip.style.opacity = '1';
       });
@@ -696,15 +761,38 @@
     const targets = document.querySelectorAll('.strip-row[data-section], .div-row[data-section], .dumb-row[data-section], .radar-dot[data-section]');
     targets.forEach(el => {
       el.addEventListener('mouseenter', () => {
-        const id   = el.getAttribute('data-section');
-        const name = el.getAttribute('data-name');
-        const pct  = el.getAttribute('data-pct');
-        const bl   = el.getAttribute('data-baseline');
-        const gap  = el.getAttribute('data-gap');
+        const id        = el.getAttribute('data-section');
+        const name      = el.getAttribute('data-name');
+        const pct       = el.getAttribute('data-pct');
+        const bl        = el.getAttribute('data-baseline');
+        const gap       = el.getAttribute('data-gap');
+        const prevPct   = el.getAttribute('data-prev-pct');
+        const kpiLabel  = el.getAttribute('data-kpi-label');
+        const dacVal    = el.getAttribute('data-dac-val');
+        const totalVal  = el.getAttribute('data-total-val');
+        const unit      = el.getAttribute('data-unit');
+
         let html = `<div class="tt-name">Section ${id} · ${name}</div>`;
-        html += `<div class="tt-row"><span>DAC share</span><span class="v">${pct}</span></div>`;
-        html += `<div class="tt-row"><span>Goal</span><span class="v">${bl}</span></div>`;
-        if (gap) html += `<div class="tt-row"><span>Gap</span><span class="v">${gap}</span></div>`;
+        if (kpiLabel) {
+          html += `<div class="tt-row" style="color:var(--text-3);font-size:9.5px;margin-bottom:4px"><span>Primary KPI: ${kpiLabel}</span></div>`;
+        }
+        html += `<div class="tt-row"><span>DAC share · ${state.year}</span><span class="v">${pct}</span></div>`;
+        if (prevPct && prevPct !== 'n/a') {
+          html += `<div class="tt-row"><span>Prior year</span><span class="v">${prevPct}</span></div>`;
+        }
+        if (dacVal && dacVal !== 'n/a') {
+          html += `<div class="tt-row"><span>DAC ${unit ? '(' + unit + ')' : 'value'}</span><span class="v">${dacVal}</span></div>`;
+        }
+        if (totalVal && totalVal !== 'n/a') {
+          html += `<div class="tt-row"><span>Total ${unit ? '(' + unit + ')' : 'value'}</span><span class="v">${totalVal}</span></div>`;
+        }
+        html += `<div class="tt-row"><span>NY Climate Act goal</span><span class="v">${bl}</span></div>`;
+        if (gap && gap !== '—') {
+          html += `<div class="tt-row"><span>Gap vs goal</span><span class="v">${gap}</span></div>`;
+        }
+        html += `<div class="tt-row" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--line)">` +
+                `<span style="font-size:9.5px;color:var(--text-3);line-height:1.4">Source: filed DAC report. DAC % = DAC value ÷ total value for the primary metric of Section ${id}.</span>` +
+                `</div>`;
         tip.innerHTML = html;
         tip.style.opacity = '1';
       });
