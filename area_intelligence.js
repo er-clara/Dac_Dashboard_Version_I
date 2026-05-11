@@ -3,10 +3,32 @@
 // Layout: 1/4 Distribution | 1/4 YoY Growth | 1/4 Equity Quadrant | 1/4 KPI Cards (2x2)
 // Responds to year-select dropdown + distMode toggle
 // ==========================================================================
-
+ 
 (function () {
   const PAYLOAD = JSON.parse(document.getElementById('payload').textContent);
-
+ 
+  // ── Section payload cache (fetched dynamically) ──
+  var SECTION_CACHE = {};
+ 
+  function getSectionPayload(letter) {
+    return new Promise(function(resolve) {
+      if (SECTION_CACHE[letter]) { resolve(SECTION_CACHE[letter]); return; }
+      fetch('section_' + letter + '.html')
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          var match = html.match(/<script[^>]+id="payload"[^>]*>([\s\S]*?)<\/script>/);
+          if (match) {
+            try {
+              var p = JSON.parse(match[1]);
+              SECTION_CACHE[letter] = p;
+              resolve(p);
+            } catch(e) { resolve(null); }
+          } else { resolve(null); }
+        })
+        .catch(function() { resolve(null); });
+    });
+  }
+ 
   const A_DATA = {
     '2024': {
       dac: 204785586, nondac: 175480128, total: 380265714,
@@ -38,11 +60,11 @@
       prevYear: '2022'
     }
   };
-
+ 
   let state    = { year: '2024' };
   let distMode = 'incentives';
   let quadMode = 'incentives';
-
+ 
   function fmtM(v) {
     if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
     if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
@@ -52,22 +74,22 @@
     if (v >= 1e6) return (v/1e6).toFixed(2) + 'M';
     return Math.round(v/1e3) + 'K';
   }
-
+ 
   // ── 1. Distribution ──
   function renderDistribution() {
     const yr  = A_DATA[state.year];
     const isSavings = distMode === 'savings';
-
+ 
     const dacVal    = isSavings ? yr.savings_dac                      : yr.dac;
     const nondacVal = isSavings ? (yr.savings_total - yr.savings_dac) : yr.nondac;
     const totalVal  = isSavings ? yr.savings_total                    : yr.total;
     const dacPct    = isSavings ? +(yr.savings_dac / yr.savings_total * 100).toFixed(1) : yr.dacPct;
     const nonPct    = (100 - dacPct).toFixed(1);
     const fmtVal    = isSavings ? v => fmtMMBtu(v) + ' MMBtu' : fmtM;
-
+ 
     const prevDacVal   = isSavings ? yr.prevSavings_dac   : yr.prevDac;
     const prevTotalVal = isSavings ? yr.prevSavings_total : yr.prevTotal;
-
+ 
     const compareHtml = prevDacVal ? `
       <div class="ai-dist-compare">
         <div class="ai-dist-cmp-row">
@@ -86,11 +108,11 @@
           <span class="ai-dist-cmp-label" style="color:var(--text-4)">No ${yr.prevYear} baseline available</span>
         </div>
       </div>`;
-
+ 
     const cardTitle = isSavings ? 'Energy Savings Distribution' : 'Incentive Spend Distribution';
-    const cardSub   = isSavings ? 'Section A · MMBtu · DAC · ' + state.year
-                                : 'Section A · Incentives Spend · DAC · ' + state.year;
-
+    const cardSub   = isSavings ? 'MMBtu · DAC vs Other Communities · ' + state.year
+                                : 'Incentives · DAC vs Other Communities · ' + state.year;
+ 
     return `
       <div class="ai-card">
         <div class="ai-card-head">
@@ -131,18 +153,18 @@
         </div>
       </div>`;
   }
-
+ 
   // ── 2. YoY Growth ──
   function renderYoY() {
     const yr = A_DATA[state.year];
-
+ 
     if (!yr.yoy) {
       return `
         <div class="ai-card">
           <div class="ai-card-head">
             <div>
               <span class="ai-card-title">Year-Over-Year Growth</span>
-              <p class="ai-card-sub">Section A · Overall vs DAC community growth · ${yr.prevYear} → ${state.year}</p>
+              <p class="ai-card-sub">Overall vs DAC community growth · ${yr.prevYear} → ${state.year}</p>
             </div>
             <span class="ai-card-tag">${yr.prevYear} → ${state.year}</span>
           </div>
@@ -151,10 +173,10 @@
           </div>
         </div>`;
     }
-
+ 
     const maxVal = 80;
     const chartH = 200;
-
+ 
     const bars = yr.yoy.map(row => {
       const oh = Math.max(3, (row.overall / maxVal) * chartH);
       const dh = Math.max(3, (row.dac     / maxVal) * chartH);
@@ -173,13 +195,13 @@
           <div class="ai-yoy-lbl">${row.label}</div>
         </div>`;
     }).join('');
-
+ 
     return `
       <div class="ai-card" style="gap:4px;">
         <div class="ai-card-head">
           <div>
             <span class="ai-card-title">Year-Over-Year Growth</span>
-            <p class="ai-card-sub">Section A · Overall vs DAC community growth · ${yr.prevYear} → ${state.year}</p>
+            <p class="ai-card-sub">Overall vs DAC community growth · ${yr.prevYear} → ${state.year}</p>
           </div>
           <span class="ai-card-tag">${yr.prevYear} → ${state.year}</span>
         </div>
@@ -190,12 +212,12 @@
         </div>
       </div>`;
   }
-
+ 
   // ── 3. Equity Quadrant ──
   function renderQuadrant() {
     const yr    = A_DATA[state.year];
     const isSav = quadMode === 'savings';
-
+ 
     const A2_2024 = [
       {name:'Affordable Multifamily Energy Efficiency Program',total:483052,dac:439980,dac_pct:0.91},
       {name:'Clean Heat – C&I Air Source Heat Pump',total:61309,dac:10598,dac_pct:0.17},
@@ -307,11 +329,52 @@
       {name:'Midstream Water and Space Heating',total:939139,dac:484759,dac_pct:0.52},
       {name:'Residential Program – Gas',total:19100,dac:425,dac_pct:0.02}
     ];
-
+ 
+    // Use cached section payload if available, else fall back to hardcoded
     var a2Data   = state.year === '2024' ? A2_2024 : A2_2023;
     var a1Data   = state.year === '2024' ? A1_2024 : A1_2023;
+ 
+    if (SECTION_CACHE['A'] && SECTION_CACHE['A'].tables) {
+      var tables = SECTION_CACHE['A'].tables;
+      var showCurrent = state.year === '2024';
+      // A1 from tables
+      var a1Table = tables.find(function(t){ return t.id === 'A1'; });
+      if (a1Table) {
+        var a1Raw = showCurrent ? a1Table.data_2024 : a1Table.data_2023;
+        var parsed = [];
+        a1Raw.forEach(function(row) {
+          if (!row || !row[0]) return;
+          var name = String(row[0]).trim();
+          if (!name || /total|grand total|program name/i.test(name)) return;
+          var total = Number(row[1]);
+          var dac   = Number(row[2]);
+          if (!isFinite(total) || total <= 0) return;
+          parsed.push({ name: name, total: total, dac: isFinite(dac)?dac:0,
+            dac_pct: total > 0 ? (isFinite(dac)?dac/total:0) : 0 });
+        });
+        if (parsed.length > 0) a1Data = parsed;
+      }
+      // A2 from tables
+      var a2Table = tables.find(function(t){ return t.id === 'A2'; });
+      if (a2Table) {
+        var a2Raw = showCurrent ? a2Table.data_2024 : a2Table.data_2023;
+        var parsed2 = [];
+        a2Raw.forEach(function(row) {
+          if (!row || !row[0]) return;
+          var name = String(row[0]).trim();
+          if (!name || /total|grand total/i.test(name)) return;
+          var total = Number(row[1]);
+          var dac   = Number(row[2]);
+          if (!isFinite(total) || total <= 0) return;
+          parsed2.push({ name: name, total: total, dac: isFinite(dac)?dac:0,
+            dac_pct: total > 0 ? (isFinite(dac)?dac/total:0) : 0 });
+        });
+        if (parsed2.length > 0) a2Data = parsed2;
+      }
+    }
+ 
     const programs = isSav ? a2Data : a1Data;
-
+ 
     const xLabel = isSav ? 'Total Energy Savings (MMBtu)' : 'Total Incentive Funding ($)';
     const fmtX   = isSav
       ? v => v >= 1e6 ? (v/1e6).toFixed(1)+'M' : Math.round(v/1e3)+'K'
@@ -319,7 +382,7 @@
     const fmtTip = isSav
       ? v => v >= 1e6 ? (v/1e6).toFixed(2)+'M MMBtu' : Math.round(v/1e3)+'K MMBtu'
       : v => v >= 1e6 ? '$'+(v/1e6).toFixed(0)+'M' : '$'+Math.round(v/1e3)+'K';
-
+ 
     const W=240, H=150, pL=30, pR=8, pT=14, pB=22;
     const iW=W-pL-pR, iH=H-pT-pB;
     const maxT = Math.max(...programs.map(p=>p.total));
@@ -327,7 +390,7 @@
     const rFor = v => Math.max(minR, Math.min(maxR, Math.sqrt(v/maxT)*maxR));
     const xFor = v => pL + (v/maxT)*iW;
     const yFor = p => pT + iH - (p*iH);
-
+ 
     let s = '';
     [0,25,50,75,100].forEach(p => {
       const y = yFor(p/100);
@@ -347,7 +410,7 @@
     s += '<text x="'+(pL+iW/2).toFixed(1)+'" y="'+(H-1)+'" font-size="5" fill="#888" text-anchor="middle">'+xLabel+'</text>';
     s += '<text x="6" y="'+(pT+iH/2).toFixed(1)+'" font-size="5" fill="#888" text-anchor="middle" transform="rotate(-90 6 '+(pT+iH/2)+')">DAC Share</text>';
     s += '<text x="'+(W-pR-2).toFixed(1)+'" y="'+(yFor(.5)-2).toFixed(1)+'" font-size="4.5" fill="#2F5496" text-anchor="end">50% parity</text>';
-
+ 
     programs.forEach(p => {
       const x = xFor(p.total);
       const y = yFor(p.dac_pct);
@@ -360,12 +423,12 @@
          + ' data-total="'+fmtTip(p.total)+'"'
          + ' data-pct="'+(p.dac_pct*100).toFixed(0)+'%"/>';
     });
-
+ 
     const cardTitle = isSav ? 'Equity Quadrant · Energy Savings' : 'Equity Quadrant · Incentive Spend';
     const cardSub   = isSav
-      ? 'Section A · DAC % vs total MMBtu · ' + state.year
-      : 'Section A · DAC % vs total $ · ' + state.year;
-
+      ? 'DAC % vs total MMBtu · circle size = program volume · ' + state.year
+      : 'DAC % vs total $ · circle size = program volume · ' + state.year;
+ 
     return `
       <div class="ai-card" style="gap:1px;">
         <div class="ai-card-head">
@@ -383,19 +446,19 @@
         </div>
       </div>`;
   }
-
+ 
   // ── 4. KPI 2×2 ──
   function renderKPICards() {
     const yr = A_DATA[state.year];
     const incGrow = yr.prevDac ? Math.round((yr.dac - yr.prevDac) / yr.prevDac * 100) : null;
     const savGrow = yr.prevSavings_dac ? Math.round((yr.savings_dac - yr.prevSavings_dac) / yr.prevSavings_dac * 100) : null;
-
+ 
     const cards = [
       {
         tag:    'Incentive Growth',
-        hero:   incGrow !== null ? '+' + incGrow + '%' : yr.dacPct + '%',
-        sub:    incGrow !== null ? 'DAC YoY increase' : 'DAC share',
-        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : fmtM(yr.dac) + ' total DAC'
+        hero:   incGrow !== null ? '+' + incGrow + '%' : '—',
+        sub:    incGrow !== null ? 'DAC YoY increase' : '',
+        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : 'No prior year baseline'
       },
       {
         tag:    'Most Equitable Program',
@@ -405,11 +468,11 @@
       },
       {
         tag:    'Savings Achieved',
-        hero:   savGrow !== null ? '+' + savGrow + '%' : fmtMMBtu(yr.savings_dac) + ' MMBtu',
-        sub:    savGrow !== null ? 'DAC savings YoY increase' : 'DAC energy savings',
+        hero:   savGrow !== null ? '+' + savGrow + '%' : '—',
+        sub:    savGrow !== null ? 'DAC savings YoY increase' : '',
         detail: yr.prevSavings_dac
           ? fmtMMBtu(yr.prevSavings_dac) + ' → ' + fmtMMBtu(yr.savings_dac) + ' MMBtu'
-          : fmtMMBtu(yr.savings_total) + ' MMBtu total'
+          : 'No prior year baseline'
       },
       {
         tag:    'Installations',
@@ -420,7 +483,7 @@
           : 'Reporting year ' + state.year
       }
     ];
-
+ 
     const html = cards.map(c => `
       <div class="ai-kpi-mini">
         <span class="ai-kpi-mini-tag">${c.tag}</span>
@@ -428,7 +491,7 @@
         <span class="ai-kpi-mini-sub">${c.sub}</span>
         <span class="ai-kpi-mini-detail">${c.detail}</span>
       </div>`).join('');
-
+ 
     return `
       <div class="ai-card ai-kpi-card-outer">
         <div class="ai-card-head">
@@ -441,7 +504,103 @@
         <div class="ai-kpi-2x2">${html}</div>
       </div>`;
   }
-
+ 
+ 
+  // ── Header Cards ──
+  function renderHeaderCards() {
+    const grid = document.getElementById('exec-header-cards');
+    if (!grid) return;
+ 
+    const yr = A_DATA[state.year];
+ 
+    // Average DAC Impact % across all sections from PAYLOAD
+    const dacPcts = PAYLOAD.kpis
+      .filter(k => k['y' + state.year] && k['y' + state.year].dac_pct != null)
+      .map(k => k['y' + state.year].dac_pct);
+    const avgDac = dacPcts.length > 0
+      ? (dacPcts.reduce((a, b) => a + b, 0) / dacPcts.length * 100).toFixed(1)
+      : '—';
+ 
+    const incGrow = yr.prevDac ? Math.round((yr.dac - yr.prevDac) / yr.prevDac * 100) : null;
+    const savGrow = yr.prevSavings_dac ? Math.round((yr.savings_dac - yr.prevSavings_dac) / yr.prevSavings_dac * 100) : null;
+ 
+    const cards = [
+      {
+        tag:    'Avg DAC Impact',
+        hero:   avgDac + '%',
+        sub:    'Average across all sections',
+        detail: 'Based on ' + dacPcts.length + ' reported metrics · ' + state.year
+      },
+      {
+        tag:    'Incentive Growth',
+        hero:   incGrow !== null ? '+' + incGrow + '%' : '—',
+        sub:    incGrow !== null ? 'DAC YoY increase' : '',
+        detail: yr.prevDac ? fmtM(yr.prevDac) + ' → ' + fmtM(yr.dac) : 'No prior year baseline'
+      },
+       {
+        tag:    'Savings Achieved',
+        hero:   savGrow !== null ? '+' + savGrow + '%' : '—',
+        sub:    savGrow !== null ? 'DAC savings YoY increase' : '',
+        detail: yr.prevSavings_dac
+          ? fmtMMBtu(yr.prevSavings_dac) + ' → ' + fmtMMBtu(yr.savings_dac) + ' MMBtu'
+          : 'No prior year baseline'
+      },
+      {
+        tag:    'Most Equitable Program',
+        hero:   yr.topProgram.pct + '%',
+        sub:    'DAC share · Section A',
+        detail: yr.topProgram.name + ' · ' + fmtM(yr.topProgram.total)
+      },
+      {
+        tag:    'Installations',
+        hero:   yr.inst_pct + '%',
+        sub:    'of upgrades in DACs',
+        detail: yr.prevYear && A_DATA[yr.prevYear]
+          ? 'vs ~' + A_DATA[yr.prevYear].inst_pct + '% in ' + yr.prevYear
+          : 'Reporting year ' + state.year
+      }
+    ];
+ 
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+    grid.style.gap = '12px';
+    grid.style.marginBottom = '16px';
+ 
+    grid.innerHTML = cards.map(c => `
+      <div class="ai-kpi-mini ai-header-card">
+        <span class="ai-kpi-mini-tag">${c.tag}</span>
+        <span class="ai-kpi-mini-hero">${c.hero}</span>
+        <span class="ai-kpi-mini-sub">${c.sub}</span>
+        <span class="ai-kpi-mini-detail">${c.detail}</span>
+      </div>`).join('');
+ 
+    // wire tooltips for header cards
+    let tip = document.querySelector('.exec-tooltip');
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'exec-tooltip';
+      document.body.appendChild(tip);
+    }
+    grid.querySelectorAll('.ai-kpi-mini').forEach(card => {
+      card.style.cursor = 'default';
+      card.addEventListener('mouseenter', () => {
+        const tag    = card.querySelector('.ai-kpi-mini-tag').textContent;
+        const hero   = card.querySelector('.ai-kpi-mini-hero').textContent;
+        const sub    = card.querySelector('.ai-kpi-mini-sub').textContent;
+        const detail = card.querySelector('.ai-kpi-mini-detail').textContent;
+        tip.innerHTML = `<div class="tt-name">${tag}</div>
+          <div class="tt-row"><span>${sub}</span><span class="v">${hero}</span></div>
+          <div class="tt-row"><span>Detail</span><span class="v">${detail}</span></div>`;
+        tip.style.opacity = '1';
+      });
+      card.addEventListener('mousemove', e => {
+        tip.style.left = (e.pageX + 14) + 'px';
+        tip.style.top  = (e.pageY - 8)  + 'px';
+      });
+      card.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+    });
+  }
+ 
   // ── Render all ──
   function renderAreaIntelligence() {
     const grid = document.getElementById('exec-area-grid');
@@ -454,9 +613,10 @@
       renderYoY() +
       renderQuadrant() +
       renderKPICards();
+    renderHeaderCards();
     wireTooltips();
   }
-
+ 
   // ── Tooltips + toggle wiring ──
   function wireTooltips() {
     let tip = document.querySelector('.exec-tooltip');
@@ -465,7 +625,7 @@
       tip.className = 'exec-tooltip';
       document.body.appendChild(tip);
     }
-
+ 
     // Distribution toggle
     document.querySelectorAll('.ai-dist-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -473,7 +633,7 @@
         renderAreaIntelligence();
       });
     });
-
+ 
     // Quadrant toggle
     document.querySelectorAll('.ai-quad-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -481,7 +641,7 @@
         renderAreaIntelligence();
       });
     });
-
+ 
     // YoY bars
     document.querySelectorAll('.ai-yoy-bar').forEach(bar => {
       bar.style.cursor = 'default';
@@ -498,7 +658,7 @@
       });
       bar.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
-
+ 
     // Quadrant dots
     document.querySelectorAll('.ai-quad-dot').forEach(dot => {
       dot.style.cursor = 'default';
@@ -515,7 +675,7 @@
       });
       dot.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
-
+ 
     // KPI mini cards
     document.querySelectorAll('.ai-kpi-mini').forEach(card => {
       card.style.cursor = 'default';
@@ -537,7 +697,7 @@
       card.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
     });
   }
-
+ 
   // ── Init ──
   function init() {
     const yrSel = document.getElementById('year-select');
@@ -546,15 +706,20 @@
       yrSel.addEventListener('change', e => {
         state.year = e.target.value;
         renderAreaIntelligence();
+        renderHeaderCards();
       });
     }
-    renderAreaIntelligence();
+    // Pre-fetch Section A payload to get full program tables
+    getSectionPayload('A').then(function() {
+      renderAreaIntelligence();
+      renderHeaderCards();
+    });
   }
-
+ 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
-
+ 
 })();

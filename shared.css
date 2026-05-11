@@ -4260,3 +4260,7 @@ a.nav-item { text-decoration: none; }
   background: var(--dusk);
   color: var(--white);
 }
+
+#exec-header-cards .ai-kpi-mini {
+  background: var(--white);
+}
